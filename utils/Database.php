@@ -5,7 +5,8 @@
 class Database{
   private static $instance = null;
   private $connection;
-  private function __construct() {
+  private function __construct() 
+  {
     $config = require_once BASE_PATH . '/config/database.php';
     
     try {
@@ -19,7 +20,8 @@ class Database{
 /**
  * Obtenir l'instance unique de la base de données (Singleton)
  */
-public static function getInstance() {
+public static function getInstance() 
+{
     if (self::$instance === null) {
         self::$instance = new self();
     }
@@ -29,14 +31,16 @@ public static function getInstance() {
 /**
  * Obtenir la connexion PDO
  */
-public function getConnection() {
+public function getConnection() 
+{
     return $this->connection;
 }
 
 /**
  * Exécuter une requête SQL
  */
-public function query($sql, $params = []) {
+public function query($sql, $params = []) 
+{
     $stmt = $this->connection->prepare($sql);
     $stmt->execute($params);
     return $stmt;
@@ -45,7 +49,8 @@ public function query($sql, $params = []) {
 /**
  * Récupérer une seule ligne
  */
-public function fetch($sql, $params = []) {
+public function fetch($sql, $params = []) 
+{
     $stmt = $this->query($sql, $params);
     return $stmt->fetch();
 }
@@ -53,7 +58,8 @@ public function fetch($sql, $params = []) {
 /**
  * Récupérer toutes les lignes
  */
-public function fetchAll($sql, $params = []) {
+public function fetchAll($sql, $params = []) 
+{
     $stmt = $this->query($sql, $params);
     return $stmt->fetchAll();
 }
@@ -61,7 +67,8 @@ public function fetchAll($sql, $params = []) {
 /**
  * Insérer des données et retourner l'ID
  */
-public function insert($table, $data) {
+public function insert($table, $data) 
+{
     $columns = implode(', ', array_keys($data));
     $placeholders = implode(', ', array_fill(0, count($data), '?'));
     
@@ -74,7 +81,8 @@ public function insert($table, $data) {
 /**
  * Mettre à jour des données
  */
-public function update($table, $data, $where, $whereParams = []) {
+public function update($table, $data, $where, $whereParams = []) 
+{
     $set = [];
     foreach (array_keys($data) as $column) {
         $set[] = "{$column} = ?";
@@ -90,9 +98,52 @@ public function update($table, $data, $where, $whereParams = []) {
 /**
  * Supprimer des données
  */
-public function delete($table, $where, $params = []) {
+public function delete($table, $where, $params = [])
+ {
     $sql = "DELETE FROM {$table} WHERE {$where}";
     return $this->query($sql, $params)->rowCount();
 }
+
+
+  /**
+   * Exécuter une requête SQL directe
+   */
+  public function execute($sql, $params = []) 
+  {
+    $stmt = $this->query($sql, $params);
+    return $stmt->rowCount();
+  }
+   /**
+   * Commencer une transaction
+   */
+  public function beginTransaction()
+   {
+    return $this->connection->beginTransaction();
+}
+
+/**
+ * Valider une transaction
+ */
+public function commit() 
+{
+    return $this->connection->commit();
+}
+
+/**
+ * Annuler une transaction
+ */
+public function rollback() 
+{
+    return $this->connection->rollBack();
+}
+
+/**
+ * Échapper une valeur pour l'utiliser dans une requête SQL
+ */
+public function escape($value) 
+{
+    return $this->connection->quote($value);
+}
+
 
 }

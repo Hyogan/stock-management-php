@@ -82,7 +82,12 @@ class AuthController {
     public function isLoggedIn() {
         return isset($_SESSION['user_id']);
     }
-    
+      /**
+     * Vérifier si l'utilisateur a un rôle spécifique
+     */
+    public function hasRole($role) {
+      return isset($_SESSION['user_role']) && $_SESSION['user_role'] === $role;
+  }
     /**
      * Vérifier si l'utilisateur est administrateur
      */
@@ -102,7 +107,7 @@ class AuthController {
             return false;
         }
         
-        return $_SESSION['user_type'] === 'magasinier';
+        return $_SESSION['user_type'] === 'storekeeper';
     }
     
     /**
@@ -113,7 +118,7 @@ class AuthController {
             return false;
         }
         
-        return $_SESSION['user_type'] === 'secretaire';
+        return $_SESSION['user_type'] === 'secretary';
     }
     
     /**
@@ -225,4 +230,72 @@ class AuthController {
             exit;
         }
     }
-}
+
+      /**
+     * Afficher le formulaire de réinitialisation de mot de passe
+     */
+    public function forgotPasswordForm() {
+      // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
+      if ($this->isLoggedIn()) {
+          header('Location: ' . APP_URL . '/dashboard');
+          exit;
+      }
+      
+      // Définir le titre de la page
+      $pageTitle = 'Mot de passe oublié';
+      
+      // Afficher la vue
+      require_once BASE_PATH . '/views/layouts/auth_header.php';
+      require_once BASE_PATH . '/views/auth/forgot_password.php';
+      require_once BASE_PATH . '/views/layouts/auth_footer.php';
+  }
+  
+  /**
+   * Traiter la demande de réinitialisation de mot de passe
+   */
+  public function forgotPassword() 
+  {
+      // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
+      if ($this->isLoggedIn()) 
+      {
+          header('Location: ' . APP_URL . '/dashboard');
+          exit;
+      }
+      // Vérifier si le formulaire a été soumis
+      if ($_SERVER['REQUEST_METHOD'] === 'POST')
+       {
+          // Récupérer l'adresse e-mail
+          $email = $_POST['email'] ?? '';
+          
+          // Valider l'adresse e-mail
+          if (empty($email)) {
+              $error = "L'adresse e-mail est requise.";
+              $pageTitle = 'Mot de passe oublié';
+              
+              require_once BASE_PATH . '/views/layouts/auth_header.php';
+              require_once BASE_PATH . '/views/auth/forgot_password.php';
+              require_once BASE_PATH . '/views/layouts/auth_footer.php';
+              return;
+          }
+          
+          // Vérifier si l'utilisateur existe
+          $user = $this->userModel->getByEmail($email);
+          
+          if ($user) {
+              // Générer un token de réinitialisation
+              $token = bin2hex(random_bytes(32));
+              $expiry = time() + (24 * 60 * 60); // 24 heures
+              
+              // Enregistrer le token en base de données
+              $this->userModel->saveResetToken($user['id_utilisateur'], $token, $expiry);
+              
+              // Envoyer l'e-mail de réinitialisation
+              $resetUrl = APP_URL . '/reset-password/' . $token;
+              $subject = 'Réinitialisation de votre mot de passe';
+              $message = "Bonjour {$user['prenom']},\n\n";
+              $message .= "Vous avez demandé la réinitialisation de votre mot de passe. ";
+              $message .= "Veuillez";
+          };
+      }
+    }
+  }

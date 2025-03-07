@@ -30,6 +30,18 @@ class User {
         return $this->db->fetch("SELECT * FROM utilisateur WHERE nom = ?", [$username]);
     }
     
+      /**
+     * Récupérer un utilisateur par son email
+     */
+    public function getByEmail($email) {
+      $query = "SELECT * FROM users WHERE email = :email";
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+      $stmt->execute();
+      
+      return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+
     /**
      * Créer un nouvel utilisateur
      */
@@ -48,7 +60,31 @@ class User {
       
       return $this->db->insert('utilisateur', $userData);
   }
-  
+   /**
+     * Ajouter un nouvel utilisateur
+     */
+    public function add($data) {
+        // Hacher le mot de passe
+        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+        
+        $query = "INSERT INTO users (nom, prenom, email, username, password, type, date_creation) 
+                  VALUES (:nom, :prenom, :email, :username, :password, :type, NOW())";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':nom', $data['nom'], PDO::PARAM_STR);
+        $stmt->bindParam(':prenom', $data['prenom'], PDO::PARAM_STR);
+        $stmt->bindParam(':email', $data['email'], PDO::PARAM_STR);
+        $stmt->bindParam(':username', $data['username'], PDO::PARAM_STR);
+        $stmt->bindParam(':password', $hashedPassword, PDO::PARAM_STR);
+        $stmt->bindParam(':type', $data['type'], PDO::PARAM_STR);
+        
+        if ($stmt->execute()) {
+            return $this->db->lastInsertId();
+        }
+        
+        return false;
+    }
+    
     
       /**
      * Mettre à jour un utilisateur
@@ -81,10 +117,6 @@ class User {
       
       return false;
   }
-    
-    /**
-     * Supprimer un utilisateur
-     */
      /**
      * Supprimer un utilisateur
      */
@@ -217,5 +249,49 @@ class User {
            WHERE id_utilisateur = ?",
           [$userId]
       );
+  }
+
+    /**
+     * Vérifier si un nom d'utilisateur existe déjà
+     */
+    public function usernameExists($username, $excludeId = null) {
+      $query = "SELECT COUNT(*) FROM users WHERE username = :username";
+      
+      if ($excludeId) {
+          $query .= " AND id != :id";
+      }
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+      
+      if ($excludeId) {
+          $stmt->bindParam(':id', $excludeId, PDO::PARAM_INT);
+      }
+      
+      $stmt->execute();
+      
+      return $stmt->fetchColumn() > 0;
+  }
+  
+  /**
+   * Vérifier si un email existe déjà
+   */
+  public function emailExists($email, $excludeId = null) {
+      $query = "SELECT COUNT(*) FROM users WHERE email = :email";
+      
+      if ($excludeId) {
+          $query .= " AND id != :id";
+      }
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+      
+      if ($excludeId) {
+          $stmt->bindParam(':id', $excludeId, PDO::PARAM_INT);
+      }
+      
+      $stmt->execute();
+      
+      return $stmt->fetchColumn() > 0;
   }
 }

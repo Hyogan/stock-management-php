@@ -171,10 +171,8 @@ class Order {
             
             // Supprimer les produits de la commande
             $this->db->delete('commande_produit', 'numero_commande = ?', [$id]);
-            
             // Supprimer la commande
             $this->db->delete('commande', 'numero_commande = ?', [$id]);
-            
             // Valider la transaction
             $this->db->getConnection()->commit();
             
@@ -374,4 +372,211 @@ class Order {
             'total_with_tax' => $order['montant'] * 1.2
         ];
     }
+      /**
+     * Récupérer les commandes par utilisateur
+     */
+    public function getByUserId($userId) {
+      $query = "SELECT * FROM commandes WHERE user_id = :user_id ORDER BY date_commande DESC";
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+      $stmt->execute();
+      
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+    /**
+     * Récupérer les détails d'une commande
+     */
+    public function getOrderDetails($orderId) {
+      $query = "SELECT * FROM commande_details WHERE commande_id = :commande_id";
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':commande_id', $orderId, PDO::PARAM_INT);
+      $stmt->execute();
+      
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+     /**
+     * Mettre à jour la date de livraison d'une commande
+     */
+    public function updateDeliveryDate($id, $date) {
+      $query = "UPDATE commandes SET date_livraison = :date_livraison WHERE id = :id";
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':date_livraison', $date, PDO::PARAM_STR);
+      $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+      
+      return $stmt->execute();
+  }
+  
+  /**
+   * Récupérer les commandes filtrées par date et statut
+   */
+  public function getFiltered($startDate, $endDate, $status = '') {
+      $query = "SELECT * FROM commandes WHERE date_commande BETWEEN :start_date AND :end_date";
+      
+      if (!empty($status)) {
+          $query .= " AND statut = :statut";
+      }
+      
+      $query .= " ORDER BY date_commande DESC";
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      
+      if (!empty($status)) {
+          $stmt->bindParam(':statut', $status, PDO::PARAM_STR);
+      }
+      
+      $stmt->execute();
+      
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+  
+  /**
+   * Récupérer les produits les plus commandés
+   */
+  public function getTopProducts($startDate, $endDate, $limit = 10) {
+      $query = "SELECT p.id, p.nom, SUM(cd.quantite) as total_quantite, SUM(cd.quantite * cd.prix_unitaire) as total_montant
+                FROM produits p
+                JOIN commande_details cd ON p.id = cd.produit_id
+                JOIN commandes c ON cd.commande_id = c.id
+                WHERE c.date_commande BETWEEN :start_date AND :end_date
+                GROUP BY p.id
+                ORDER BY total_quantite DESC
+                LIMIT :limit";
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+      $stmt->execute();
+      
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+  
+  /**
+   * Rechercher des commandes
+   */
+  public function search($keyword, $status = '', $startDate = '', $endDate = '') {
+      $query = "SELECT c.*, u.nom, u.prenom 
+                FROM commandes c
+                JOIN users u ON c.user_id = u.id
+                WHERE 1=1";
+      
+      $params = [];
+      
+      if (!empty($keyword)) {
+          $query .= " AND (c.id LIKE :keyword OR u.nom LIKE :keyword OR u.prenom LIKE :keyword)";
+          $params[':keyword'] = "%$keyword%";
+      }
+      
+      if (!empty($status)) {
+          $query .= " AND c.statut = :statut";
+          $params[':statut'] = $status;
+      }
+      
+      if (!empty($startDate)) {
+          $query .= " AND c.date_commande >= :start_date";
+          $params[':start_date'] = $startDate . ' 00:00:00';
+      }
+      
+      if (!empty($endDate)) {
+          $query .= " AND c.date_commande <= :end_date";
+          $params[':end_date'] = $endDate . ' 23:59:59';
+      }
+      
+      $query .= " ORDER BY c.date_commande DESC";
+      
+      $stmt = $this->db->prepare($query);
+      
+      foreach ($params as $key => $value) {
+          $stmt->bindValue($key, $value);
+      }
+      
+      $stmt->execute();
+      
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+
+   /**
+     * Calculer les statistiques des commandes (suite)
+     */
+    public function getStats($startDate, $endDate) {
+      $stats = [
+          'total_commandes' => 0,
+          'total_montant' => 0,
+          'par_statut' => [],
+          'par_jour' => []
+      ];
+      
+      // Nombre total de commandes et montant total
+      $query = "SELECT COUNT(*) as total, SUM(montant_total) as montant 
+                FROM commandes 
+                WHERE date_commande BETWEEN :start_date AND :end_date";
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $stmt->execute();
+      
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      $stats['total_commandes'] = $result['total'];
+      $stats['total_montant'] = $result['montant'];
+      
+      // Commandes par statut
+      $query = "SELECT statut, COUNT(*) as total, SUM(montant_total) as montant 
+                FROM commandes 
+                WHERE date_commande BETWEEN :start_date AND :end_date 
+                GROUP BY statut";
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $stmt->execute();
+      
+      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+          $stats['par_statut'][$row['statut']] = [
+              'total' => $row['total'],
+              'montant' => $row['montant']
+          ];
+      }
+      
+      // Commandes par jour
+      $query = "SELECT DATE(date_commande) as jour, COUNT(*) as total, SUM(montant_total) as montant 
+                FROM commandes 
+                WHERE date_commande BETWEEN :start_date AND :end_date 
+                GROUP BY DATE(date_commande) 
+                ORDER BY jour";
+      
+      $stmt = $this->db->prepare($query);
+      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $stmt->execute();
+      
+      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+          $stats['par_jour'][$row['jour']] = [
+              'total' => $row['total'],
+              'montant' => $row['montant']
+          ];
+      }
+      
+      return $stats;
+  }
+
+    
+    /**
+     * Récupérer le nombre de commandes par statut
+     */
+    public function getCountByStatus() {
+      $query = "SELECT statut, COUNT(*) as total FROM commandes GROUP BY statut";
+      $stmt = $this->db->prepare($query);
+      $stmt->execute();
+      
+      $result = [];
+      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+          $result[$row['statut']] = $row['total'];
+      }
+      
+      return $result;
+  }
 }
