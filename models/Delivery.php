@@ -39,7 +39,7 @@ class Delivery {
      */
     public function create($data) {
         // Récupérer les informations de la sortie
-        $exitModel = new Exit();
+        $exitModel = new ExitOp();
         $exit = $exitModel->getById($data['id_sortie']);
         
         if (!$exit) {
@@ -57,6 +57,20 @@ class Delivery {
         
         return $this->db->insert('livraison', $deliveryData);
     }
+
+    /**
+ * Récupérer une livraison par l'ID de commande
+ */
+public function getByOrderId($orderId) {
+  return $this->db->fetch(
+      "SELECT l.*, c.numero_commande, cl.nom as nom_client, cl.prenom as prenom_client
+       FROM livraison l
+       JOIN commande c ON l.id_commande = c.id_commande
+       JOIN client cl ON c.id_client = cl.id_client
+       WHERE l.id_commande = ?",
+      [$orderId]
+  );
+}
     
     /**
      * Mettre à jour une livraison
@@ -78,6 +92,15 @@ class Delivery {
         
         return false;
     }
+        /**
+     * Mettre à jour le statut d'une livraison
+     */
+    public function updateStatus($id, $status) {
+      return $this->db->execute(
+          "UPDATE livraison SET statut = ? WHERE id_livraison = ?",
+          [$status, $id]
+      );
+  }
     
     /**
      * Supprimer une livraison
@@ -138,7 +161,7 @@ class Delivery {
             return [];
         }
         
-        $exitModel = new Exit();
+        $exitModel = new ExitOp();
         return $exitModel->getProducts($delivery['id_sortie']);
     }
     
@@ -150,7 +173,7 @@ class Delivery {
         $products = $this->getProducts($id);
         
         // Récupérer les informations du client
-        $exitModel = new Exit();
+        $exitModel = new ExitOp();
         $exit = $exitModel->getById($delivery['id_sortie']);
         
         // Ici, vous pourriez générer un PDF ou simplement retourner les données

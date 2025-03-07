@@ -350,11 +350,9 @@ public function generateDeliveryNote($id) {
     $pdf->SetFont('Arial', '', 10);
     $pdf->Cell(0, 6, 'Adresse: 123 Rue Principale', 0, 1, 'L');
     $pdf->Cell(0, 6, 'Téléphone: +221 33 123 45 67', 0, 1, 'L');
-    $pdf->Cell(0, 6, 'Email: contact@example.com', 0, 1,
-
+    $pdf->Cell(0, 6, 'Email: contact@example.com', 0, 1,'L');
     $pdf->Cell(0, 6, 'Email: contact@example.com', 0, 1, 'L');
     $pdf->Ln(10);
-    
     // Informations du client
     $pdf->SetFont('Arial', 'B', 12);
     $pdf->Cell(0, 10, 'Client:', 0, 1, 'L');

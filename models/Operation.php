@@ -4,6 +4,7 @@
  */
 class Operation {
     protected $db;
+    protected $table = 'operation';
     
     public function __construct() {
         $this->db = Database::getInstance();
@@ -26,7 +27,7 @@ class Operation {
     /**
      * Créer une nouvelle opération
      */
-    public function create($data,$products) {
+    public function create($data) {
         // Ajouter la date si elle n'est pas spécifiée
         if (!isset($data['date'])) {
             $data['date'] = date('Y-m-d H:i:s');
@@ -64,6 +65,20 @@ class Operation {
             'prix_unitaire' => $price
         ]);
     }
+
+    /**
+ * Récupérer l'utilisateur associé à l'opération
+ */
+  public function getUser($operationId) 
+  {
+    return $this->db->fetch(
+        "SELECT u.* 
+        FROM utilisateur u
+        JOIN operation o ON u.id_utilisateur = o.id_utilisateur
+        WHERE o.id_operation = ?",
+        [$operationId]
+    );
+  }
     
     /**
      * Récupérer les produits d'une opération
@@ -77,6 +92,51 @@ class Operation {
             [$operationId]
         );
     }
+
+    /**
+ * Filtrer les opérations selon des critères
+ */
+/**
+ * Filtrer les opérations selon des critères
+ */
+  public function filter($criteria = [], $startDate = null, $endDate = null, $type = null)
+  {
+    $sql = "SELECT * FROM " . $this->table;
+    $params = [];
+    $conditions = [];
+    
+    // Construire la clause WHERE si des critères sont fournis
+    if (!empty($criteria)) {
+        foreach ($criteria as $key => $value) {
+            if ($value !== null) {
+                $conditions[] = "$key = ?";
+                $params[] = $value;
+            }
+        }
+    }
+    
+    // Ajouter la condition de date si fournie
+    if ($startDate && $endDate) {
+        $conditions[] = "date_operation BETWEEN ? AND ?";
+        $params[] = $startDate;
+        $params[] = $endDate;
+    }
+    
+    // Ajouter la condition de type si fournie
+    if ($type !== null) {
+        $conditions[] = "type = ?";
+        $params[] = $type;
+    }
+    
+    // Ajouter les conditions à la requête
+    if (!empty($conditions)) {
+        $sql .= " WHERE " . implode(' AND ', $conditions);
+    }
+    
+    $sql .= " ORDER BY date_operation DESC";
+    
+    return $this->db->fetchAll($sql, $params);
+  }
     
     /**
      * Calculer le total d'une opération

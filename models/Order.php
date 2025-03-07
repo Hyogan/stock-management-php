@@ -33,6 +33,19 @@ class Order {
             [$id]
         );
     }
+
+        /**
+     * Récupérer les détails d'une commande (produits)
+     */
+    public function getItems($orderId) {
+      return $this->db->fetchAll(
+          "SELECT d.*, p.designation, p.reference
+           FROM detail_commande d
+           JOIN produit p ON d.id_produit = p.id_produit
+           WHERE d.id_commande = ?",
+          [$orderId]
+      );
+  }
     
     /**
      * Créer une nouvelle commande
@@ -89,6 +102,27 @@ class Order {
             throw $e;
         }
     }
+
+     /**
+     * Mettre à jour le statut d'une commande
+     */
+    public function updateStatus($orderId, $status) {
+      return $this->db->execute(
+          "UPDATE commande SET statut = ? WHERE id_commande = ?",
+          [$status, $orderId]
+      );
+  }
+  
+  /**
+   * Récupérer le client d'une commande
+   */
+  public function getClient($clientId) {
+      return $this->db->fetch(
+          "SELECT * FROM client WHERE id_client = ?",
+          [$clientId]
+      );
+  }
+  
     
     /**
      * Mettre à jour une commande
@@ -420,8 +454,10 @@ class Order {
       $query .= " ORDER BY date_commande DESC";
       
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $startDateTime = "{$startDate} 00:00:00";
+      $endDateTime = "{$endDate} 23:59:59";
+      $stmt->bindParam(':start_date', $startDateTime, PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDateTime, PDO::PARAM_STR);
       
       if (!empty($status)) {
           $stmt->bindParam(':statut', $status, PDO::PARAM_STR);
@@ -446,8 +482,10 @@ class Order {
                 LIMIT :limit";
       
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $startDateTime = "{$startDate} 00:00:00";
+      $endDateTime = "{$endDate} 23:59:59";
+      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate , PDO::PARAM_STR);
       $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
       $stmt->execute();
       
@@ -513,10 +551,11 @@ class Order {
       $query = "SELECT COUNT(*) as total, SUM(montant_total) as montant 
                 FROM commandes 
                 WHERE date_commande BETWEEN :start_date AND :end_date";
-      
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $startDateTime = "{$startDate} 00:00:00";
+      $endDateTime = "{$endDate} 23:59:59";
+      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
       $stmt->execute();
       
       $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -530,8 +569,10 @@ class Order {
                 GROUP BY statut";
       
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $startDateTime = "{$startDate} 00:00:00";
+      $endDateTime = "{$endDate} 23:59:59";
+      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
       $stmt->execute();
       
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -549,8 +590,10 @@ class Order {
                 ORDER BY jour";
       
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':start_date', $startDate . ' 00:00:00', PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate . ' 23:59:59', PDO::PARAM_STR);
+      $startDateTime = "{$startDate} 00:00:00";
+      $endDateTime = "{$endDate} 23:59:59";
+      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
       $stmt->execute();
       
       while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {

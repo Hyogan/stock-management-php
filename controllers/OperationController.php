@@ -1,5 +1,4 @@
 <?php
-class OperationController{
   /**
  * Contrôleur des Opérations
  * Gère toutes les opérations liées aux mouvements de stock

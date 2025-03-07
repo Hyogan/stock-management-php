@@ -39,7 +39,8 @@ class User {
       $stmt->bindParam(':email', $email, PDO::PARAM_STR);
       $stmt->execute();
       
-      return $stmt->fetch(PDO::FETCH_ASSOC);
+      $result =  $stmt->fetch(PDO::FETCH_ASSOC);
+      return $result ?? null;    
   }
 
     /**
@@ -79,7 +80,7 @@ class User {
         $stmt->bindParam(':type', $data['type'], PDO::PARAM_STR);
         
         if ($stmt->execute()) {
-            return $this->db->lastInsertId();
+            return $this->db->getConnection()->lastInsertId();
         }
         
         return false;
@@ -293,5 +294,15 @@ class User {
       $stmt->execute();
       
       return $stmt->fetchColumn() > 0;
+  }
+
+    /**
+   * Enregistre un token de réinitialisation de mot de passe
+   */
+  public function saveResetToken($userId, $token, $expiry) {
+    return $this->db->execute(
+        "UPDATE utilisateur SET reset_token = ?, reset_token_expiry = ? WHERE id_utilisateur = ?",
+        [$token, $expiry, $userId]
+    );
   }
 }

@@ -21,7 +21,7 @@ class OrderController {
      */
     public function index() {
         // Vérifier si l'utilisateur est connecté
-        $this->authController->checkLogin();
+        $this->authController->isLoggedIn();
         
         // Récupérer les commandes selon le rôle de l'utilisateur
         if ($this->authController->isAdmin()) {
@@ -48,7 +48,7 @@ class OrderController {
      */
     public function show($id) {
         // Vérifier si l'utilisateur est connecté
-        $this->authController->checkLogin();
+        $this->authController->isLoggedIn();
         
         // Récupérer la commande
         $order = $this->orderModel->getById($id);
@@ -152,7 +152,7 @@ class OrderController {
             }
             
             // Créer la commande
-            $orderId = $this->orderModel->create($orderData);
+            $orderId = $this->orderModel->create($orderData,$orderData['products']);
             
             if ($orderId) {
                 $_SESSION['success_message'] = "La commande a été créée avec succès.";

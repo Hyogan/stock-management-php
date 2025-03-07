@@ -63,13 +63,13 @@ class Product {
     /**
      * Mettre à jour le stock d'un produit
      */
-    public function updateStock($id, $quantity) {
+    public function updateStock($id, $quantity, $type) {
         $product = $this->getById($id);
         if (!$product) {
             return false;
         }
-        
-        $newQuantity = $product['quantite'] + $quantity;
+        // $newQuantity = $product['quantite'];
+        $newQuantity = ($type == '-') ? $product['quantite'] - $quantity : $product['quantite'] + $quantity;
         
         // Empêcher les quantités négatives
         if ($newQuantity < 0) {

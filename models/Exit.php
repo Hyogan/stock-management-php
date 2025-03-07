@@ -4,7 +4,7 @@ require_once 'Operation.php';
 /**
  * Modèle Sortie (hérite d'Opération)
  */
-class Exit extends Operation {
+class ExitOp extends Operation {
     
     /**
      * Récupérer toutes les sorties
@@ -34,75 +34,45 @@ class Exit extends Operation {
     /**
      * Créer une nouvelle sortie
      */
-    public function create($data, $products) {
-        // Commencer une transaction
-        $this->db->getConnection()->beginTransaction();
+    /**
+ * Créer une nouvelle sortie de stock
+ */
+  public function create($data, $products = null) 
+  {
+    try {
+        // Démarrer une transaction
+        $this->db->beginTransaction();
         
-        try {
-            // Vérifier la disponibilité des produits
-            $productModel = new Product();
-            foreach ($products as $product) {
-                if (!$productModel->isInStock($product['id_produit'], $product['quantite'])) {
-                    throw new Exception("Le produit ID {$product['id_produit']} n'est pas disponible en quantité suffisante.");
-                }
-            }
-            
-            // Créer l'opération
-            $operationData = [
-                'date' => $data['date'] ?? date('Y-m-d H:i:s'),
-                'prix' => 0, // Sera mis à jour après l'ajout des produits
-                'nombre_produit' => count($products),
-                'type' => 'sortie'
-            ];
-            
-            $operationId = parent::create($operationData);
-            
-            // Créer la sortie
-            $exitData = [
-                'id_sortie' => $operationId,
-                'client' => $data['client']
-            ];
-            
-            $this->db->insert('sortie', $exitData);
-            
-            // Ajouter les produits à l'opération
-            foreach ($products as $product) {
-                // Ajouter le produit à l'opération
-                parent::addProduct(
-                    $operationId,
-                    $product['id_produit'],
-                    $product['quantite'],
-                    $product['prix_unitaire']
-                );
-                
-                // Mettre à jour le stock (diminuer)
-                $productModel->updateStock($product['id_produit'], -$product['quantite']);
-            }
-            
-            // Mettre à jour le total de l'opération
-            parent::updateTotal($operationId);
-            
-            // Si une commande est associée, la mettre à jour
-            if (isset($data['numero_commande'])) {
-                $this->linkToOrder($operationId, $data['numero_commande']);
-            }
-            
-            // Créer un bon de livraison si nécessaire
-            if (isset($data['create_delivery']) && $data['create_delivery']) {
-                $this->createDelivery($operationId, $data);
-            }
-            
-            // Valider la transaction
-            $this->db->getConnection()->commit();
-            
-            return $operationId;
-        } catch (Exception $e) {
-            // Annuler la transaction en cas d'erreur
-            $this->db->getConnection()->rollBack();
-            throw $e;
-        }
+        // Insérer la sortie
+        $exitId = $this->db->insert('sortie_stock', [
+            'id_produit' => $data['id_produit'],
+            'quantite' => $data['quantite'],
+            'motif' => $data['motif'],
+            'date_sortie' => $data['date_sortie'],
+            'id_utilisateur' => $data['id_utilisateur']
+        ]);
+        
+        // Mettre à jour le stock du produit
+        $this->updateProductStock($data['id_produit'], $data['quantite'],'-');
+        
+        // Valider la transaction
+        $this->db->commit();
+        
+        return $exitId;
+    } catch (Exception $e) {
+        // Annuler la transaction en cas d'erreur
+        $this->db->rollback();
+        throw $e;
     }
-    
+  }
+  /**
+ * Mettre à jour le stock d'un produit
+ */
+  protected function updateProductStock($productId, $quantity,$type) {
+    $productModel = new Product();
+    return $productModel->updateStock($productId, $quantity,$type);
+}
+      
     /**
      * Mettre à jour une sortie
      */
@@ -140,7 +110,7 @@ class Exit extends Operation {
                 // Récupérer les produits actuels pour annuler leur effet sur le stock
                 $currentProducts = parent::getProducts($id);
                 foreach ($currentProducts as $product) {
-                    $productModel->updateStock($product['id_produit'], $product['quantite']);
+                    $productModel->updateStock($product['id_produit'], $product['quantite'],'+');
                 }
                 
                 // Vérifier la disponibilité des nouveaux produits
@@ -163,7 +133,7 @@ class Exit extends Operation {
                     );
                     
                     // Mettre à jour le stock (diminuer)
-                    $productModel->updateStock($product['id_produit'], -$product['quantite']);
+                    $productModel->updateStock($product['id_produit'], $product['quantite'],'-');
                 }
                 
                 // Mettre à jour le total de l'opération
@@ -194,7 +164,7 @@ class Exit extends Operation {
             // Récupérer les produits pour annuler leur effet sur le stock
             $products = parent::getProducts($id);
             foreach ($products as $product) {
-                $productModel->updateStock($product['id_produit'], $product['quantite']);
+                $productModel->updateStock($product['id_produit'], $product['quantite'],'-');
             }
             
             // Supprimer les liens avec les commandes
@@ -280,16 +250,25 @@ class Exit extends Operation {
     /**
      * Récupérer les sorties par période
      */
-    public function getByPeriod($startDate, $endDate) {
-        return $this->db->fetchAll(
-            "SELECT o.*, s.id_sortie, s.client 
-             FROM operation o
-             JOIN sortie s ON o.numero_operation = s.id_sortie
-             WHERE o.date BETWEEN ? AND ?
-             ORDER BY o.date DESC",
-            [$startDate, $endDate]
-        );
-    }
+    public function getByPeriod($startDate, $endDate, $type = null) {
+      $sql = "SELECT s.*, p.designation, p.reference, u.nom as nom_utilisateur
+              FROM sortie_stock s
+              JOIN produit p ON s.id_produit = p.id_produit
+              JOIN utilisateur u ON s.id_utilisateur = u.id_utilisateur
+              WHERE s.date_sortie BETWEEN ? AND ?";
+      
+      $params = [$startDate, $endDate];
+      
+      // Si un type spécifique est demandé
+      if ($type !== null) {
+          $sql .= " AND s.type = ?";
+          $params[] = $type;
+      }
+      
+      $sql .= " ORDER BY s.date_sortie DESC";
+      
+      return $this->db->fetchAll($sql, $params);
+  }
     
     /**
      * Récupérer les statistiques des sorties par client
