@@ -4,7 +4,7 @@
  */
 class Database{
   private static $instance = null;
-  private $connexion;
+  private $connection;
   private function __construct() {
     $config = require_once BASE_PATH . '/config/database.php';
     
