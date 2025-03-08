@@ -16,7 +16,7 @@ class Database {
             $dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset={$config['charset']}";
             $this->connection = new \PDO($dsn, $config['username'], $config['password'], $config['options']);
         } catch (\PDOException $e) {
-            die("Erreur de connexion à la base de données: " . $e->getMessage());
+            die("Erreur de connexion à la base de données pour cette raison: " . $e->getMessage());
         }
     }
 

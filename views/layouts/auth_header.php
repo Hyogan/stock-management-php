@@ -10,10 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="auth-page">
-    <div class="auth-container">
-        <header class="auth-header">
-            <h1>Admin Elect</h1>
-            <!-- Logo ou autres éléments d'en-tête -->
-        </header>
-        <main class="auth-content">
-            <!-- Le contenu spécifique de chaque page sera inséré ici -->
+<main class="container">
+    <div class="auth-form">
+

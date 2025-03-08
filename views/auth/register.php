@@ -1,54 +1,54 @@
 <?php
-// Définir le titre de la page
-$pageTitle = 'Inscription';
-
-// Inclure l'en-tête
-require_once BASE_PATH . '/views/layouts/auth_header.php';
+// register.php
+require_once VIEW_PATH . '/layouts/auth_header.php';
 ?>
 
-<h4 class="text-center mb-4">Créer un compte</h4>
+    <h2 class="text-center mb-4">Inscription</h2>
 
-<?php if (isset($error)): ?>
-    <div class="alert alert-danger" role="alert">
-        <?= $error ?>
-    </div>
-<?php endif; ?>
-
-<form action="<?= APP_URL ?>/auth/register" method="post">
-    <div class="mb-3">
-        <label for="username" class="form-label">Nom d'utilisateur</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-user"></i></span>
-            <input type="text" class="form-control" id="username" name="username" required>
+    <?php if (isset($register_error)): ?>
+        <div class="alert alert-danger">
+            <?php echo $register_error; ?>
         </div>
-    </div>
-    
-    <div class="mb-3">
-        <label for="password" class="form-label">Mot de passe</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+    <?php endif; ?>
+
+    <form method="post" action="<?php echo APP_URL; ?>/auth/user/store" class="needs-validation" novalidate>
+        <div class="form-group mb-3">
+            <label for="nom">Nom</label>
+            <input type="text" class="form-control" id="nom" name="nom" required>
+            <div class="invalid-feedback">
+                Veuillez entrer votre nom.
+            </div>
+        </div>
+        <div class="form-group mb-3">
+            <label for="prenom">Prenom</label>
+            <input type="text" class="form-control" id="prenom" name="prenom" required>
+            <div class="invalid-feedback">
+                Veuillez entrer votre prenom.
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+            <div class="invalid-feedback">
+                Veuillez entrer une adresse email valide.
+            </div>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="password">Mot de passe</label>
             <input type="password" class="form-control" id="password" name="password" required>
+            <div class="invalid-feedback">
+                Veuillez entrer votre mot de passe.
+            </div>
         </div>
-    </div>
 
-    <div class="mb-3">
-        <label for="confirm_password" class="form-label">Confirmer le mot de passe</label>
-        <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
-            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+        <div class="form-group">
+            <button type="submit" class="btn btn-success btn-block">S'inscrire</button>
         </div>
-    </div>
-    
-    <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-primary">S'inscrire</button>
-    </div>
-</form>
+        <div class="text-center mt-2">
+            <a href="<?php echo APP_URL; ?>/auth/login">Déja inscrit? se connecter.</a>
+        </div>
+    </form>
 
-<div class="text-center mt-3">
-    <a href="<?= APP_URL ?>/auth/login" class="text-decoration-none">Déjà un compte? Se connecter</a>
-</div>
-
-<?php
-// Inclure le pied de page
-require_once BASE_PATH . '/views/layouts/auth_footer.php';
-?>
+<?php require_once VIEW_PATH . '/layouts/auth_footer.php'; ?>

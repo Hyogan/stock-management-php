@@ -20,11 +20,7 @@ public function index() {
     
     // Récupérer toutes les livraisons
     $deliveries = $this->deliveryModel->getAll();
-    
-    // Définir le titre de la page
     $pageTitle = 'Gestion des Livraisons';
-    
-    // Afficher la vue
     require_once BASE_PATH . '/views/layouts/header.php';
     require_once BASE_PATH . '/views/deliveries/index.php';
     require_once BASE_PATH . '/views/layouts/footer.php';

@@ -10,10 +10,11 @@ $routes = [];
 
 // Routes d'authentification
 $routes['/'] = ['HomeController', 'index'];
-$routes['/auth/login'] = ['AuthController', 'loginForm'];
-$routes['/auth/authenticate'] = ['AuthController', 'login'];
-$routes['/auth/logout'] = ['AuthController', 'logout'];
+$routes['/auth/login'] = ['AuthController', 'login'];
+$routes['/auth/authenticate'] = ['AuthController', 'authenticate'];
+$routes['/auth/logout'] = ['`AuthController`', 'logout'];
 $routes['/auth/register'] = ['AuthController', 'register'];
+$routes['/auth/user/store'] = ['AuthController', 'store'];
 $routes['/auth/forgot-password'] = ['AuthController', 'forgotPassword'];
 $routes['/auth/reset-password'] = ['AuthController', 'resetPassword'];
 

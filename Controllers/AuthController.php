@@ -12,7 +12,7 @@ class AuthController extends Controller{
     /**
      * Afficher le formulaire de connexion
      */
-    public function loginForm() {
+    public function login() {
         // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
         if ($this->isLoggedIn()) {
           $this->redirect('/dashboard');
@@ -22,11 +22,105 @@ class AuthController extends Controller{
           'pageTitle' => 'Connexion'
       ]);
     }
+
+
+    public function register() 
+    {
+      // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
+      if ($this->isLoggedIn()) {
+          $this->redirect('/dashboard');
+          exit;
+      }
+
+      $this->view('auth/register', [
+          'pageTitle' => 'Inscription'
+      ]);
+  }
+
+
+  public function store() {
+    // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
+    if ($this->isLoggedIn()) {
+        $this->redirect('/dashboard');
+        exit;
+    }
+
+    // Vérifier si le formulaire a été soumis
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $nom = $_POST['nom'] ?? '';
+        $prenom = $_POST['prenom'] ?? '';
+        $email = $_POST['email'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $role = 'secretary'; // Role par défaut
+        $statut = 'actif'; // Statut par défaut
+
+        $errors = [];
+
+        // Validation des données
+        if (empty($nom)) {
+            $errors['nom'] = 'Le nom est obligatoire';
+        }
+        if (empty($prenom)) {
+            $errors['prenom'] = 'Le prénom est obligatoire';
+        }
+        if (empty($email)) {
+            $errors['email'] = 'L\'email est obligatoire';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'L\'email n\'est pas valide';
+        }
+        if (empty($password)) {
+            $errors['password'] = 'Le mot de passe est obligatoire';
+        } elseif (strlen($password) < 8) {
+            $errors['password'] = 'Le mot de passe doit contenir au moins 8 caractères';
+        }
+
+        // Vérifier si l'email existe déjà
+        if (User::emailExists($email)) {
+            $errors['email'] = 'Cet email est déjà utilisé';
+        }
+
+        // Si des erreurs sont présentes, afficher le formulaire avec les erreurs
+        if (!empty($errors)) {
+            $this->view('auth/register', [
+                'pageTitle' => 'Inscription',
+                'nom' => $nom,
+                'prenom' => $prenom,
+                'email' => $email,
+                'errors' => $errors
+            ]);
+            return;
+        }
+
+        // Ajouter l'utilisateur à la base de données
+        $userId = User::add([
+            'nom' => $nom,
+            'prenom' => $prenom,
+            'email' => $email,
+            'mot_de_passe' => $password, // Le mot de passe sera hashé dans le modèle
+            'role' => $role,
+            'statut' => $statut
+        ]);
+
+        if ($userId) {
+            // Rediriger vers la page de connexion avec un message de succès
+            $this->redirect('/auth/login?register_success=1');
+        } else {
+            // Afficher une erreur si l'inscription a échoué
+            $this->view('auth/register', [
+                'pageTitle' => 'Inscription',
+                'error' => 'Une erreur est survenue lors de l\'inscription'
+            ]);
+        }
+    } else {
+        // Si le formulaire n'a pas été soumis, afficher le formulaire
+        $this->register();
+    }
+}
     
     /**
      * Traiter la connexion
      */
-    public function login() {
+    public function authenticate() {
         // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
         if ($this->isLoggedIn()) {
             $this->view('auth/login', [
@@ -105,18 +199,20 @@ class AuthController extends Controller{
      */
     public function logout() {
       // Supprimer le token "Se souvenir de moi" s'il existe
-      if (isset($_COOKIE['remember_token'])) {
-          $token = $_COOKIE['remember_token'];
-          User::deleteRememberToken($token);
-          setcookie('remember_token', '', time() - 3600, '/', '', false, true);
-      }
-      
-      // Détruire la session
+      session_start();
       session_unset();
       session_destroy();
+      // Supprimer le cookie de session
+      if (ini_get("session.use_cookies")) {
+          $params = session_get_cookie_params();
+          setcookie(session_name(), '', time() - 42000,
+              $params["path"], $params["domain"],
+              $params["secure"], $params["httponly"]
+          );
+      }
       
       // Rediriger vers la page de connexion
-      $this->redirect('/login');
+      $this->redirect('/auth/login');
   }
     
     /**

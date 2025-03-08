@@ -11,7 +11,7 @@ define('APP_VERSION', '1.0.0'); // Version de l'application
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'admin_elect');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', 'root');
 
 // Configuration des chemins
 define('ROOT_PATH', dirname(__DIR__));

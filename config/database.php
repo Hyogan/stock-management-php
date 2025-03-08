@@ -7,7 +7,7 @@ return [
     'host' => 'localhost',
     'dbname' => 'stock_management',
     'username' => 'root',
-    'password' => '',
+    'password' => 'root',
     'charset' => 'utf8mb4',
     'options' => [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
