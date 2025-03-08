@@ -1,4 +1,5 @@
 <?php
+use App\Utils\Database;
   class Auth {
     private $db;
     

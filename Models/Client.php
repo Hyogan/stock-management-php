@@ -2,9 +2,11 @@
 /**
  * Modèle Client
  */
-class Client {
-    private $db;
-    
+
+ use App\Core\Model;
+ use App\Utils\Database; 
+class Client extends Model{
+    protected static $table = 'clients';
     public function __construct() {
         $this->db = Database::getInstance();
     }
@@ -12,37 +14,85 @@ class Client {
     /**
      * Récupérer tous les clients
      */
-    public function getAll() {
-        return $this->db->fetchAll("SELECT * FROM client ORDER BY nom, prenom");
+    public static function getAll() {
+        $db = Database::getInstance();
+        return $db->fetchAll("SELECT * FROM client ORDER BY nom, prenom");
     }
     
     /**
      * Récupérer un client par son ID
      */
-    public function getById($id) {
-        return $this->db->fetch("SELECT * FROM client WHERE id_client = ?", [$id]);
+    public static function getById($id) {
+        $db = Database::getInstance();
+        return $db->fetch("SELECT * FROM client WHERE id_client = ?", [$id]);
     }
     
     /**
      * Créer un nouveau client
      */
-    public function create($data) {
-        return $this->db->insert('client', $data);
-    }
+    public static function create($data) {
+      $db = Database::getInstance();
+      $query = "INSERT INTO clients (nom, prenom, email, telephone, adresse, ville, code_postal, pays, date_creation) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+      
+      $params = [
+          $data['nom'],
+          $data['prenom'],
+          $data['email'],
+          $data['telephone'],
+          $data['adresse'],
+          $data['ville'],
+          $data['code_postal'],
+          $data['pays']
+      ];
+      
+      $db->query($query, $params);
+      return $db->getConnection()->lastInsertId();
+  }
+  
     
     /**
      * Mettre à jour un client
      */
-    public function update($id, $data) {
-        return $this->db->update('client', $data, 'id_client = ?', [$id]);
-    }
+ /**
+     * Met à jour un client
+     */
+    public static function update($id, $data) {
+      $db = Database::getInstance();
+      $query = "UPDATE clients 
+               SET nom = ?, 
+                   prenom = ?, 
+                   email = ?, 
+                   telephone = ?, 
+                   adresse = ?, 
+                   ville = ?, 
+                   code_postal = ?, 
+                   pays = ?, 
+                   date_modification = NOW() 
+               WHERE id = ?";
+      
+      $params = [
+          $data['nom'],
+          $data['prenom'],
+          $data['email'],
+          $data['telephone'],
+          $data['adresse'],
+          $data['ville'],
+          $data['code_postal'],
+          $data['pays'],
+          $id
+      ];
+      
+      return $db->query($query, $params);
+  }
     
     /**
      * Supprimer un client
      */
-    public function delete($id) {
-        return $this->db->delete('client', 'id_client = ?', [$id]);
-    }
+    public static function delete($id) {
+      $db = Database::getInstance();
+      return $db->query("DELETE FROM clients WHERE id = ?", [$id]);
+  }
     
     /**
      * Rechercher des clients
@@ -183,4 +233,42 @@ class Client {
             [$date]
         );
     }
+
+    /**
+ * Récupère toutes les commandes d'un client spécifique
+ * 
+ * @param int $clientId L'identifiant du client
+ * @param int $limit Limite optionnelle du nombre de résultats
+ * @param int $offset Décalage optionnel pour la pagination
+ * @return array Les commandes du client
+ */
+  public static function getOrders($clientId, $limit = null, $offset = null) {
+    $sql = "SELECT c.*, 
+            CASE 
+                WHEN c.statut = 'en_attente' THEN 'En attente'
+                WHEN c.statut = 'validee' THEN 'Validée'
+                WHEN c.statut = 'en_cours' THEN 'En cours de livraison'
+                WHEN c.statut = 'livree' THEN 'Livrée'
+                WHEN c.statut = 'annulee' THEN 'Annulée'
+                ELSE c.statut
+            END AS statut_libelle,
+            DATE_FORMAT(c.date_commande, '%d/%m/%Y') AS date_formatee
+            FROM commande c
+            WHERE c.id_client = ?
+            ORDER BY c.date_commande DESC";
+    
+    $params = [$clientId];
+    
+    if ($limit !== null) {
+        $sql .= " LIMIT ?";
+        $params[] = (int)$limit;
+        
+        if ($offset !== null) {
+            $sql .= " OFFSET ?";
+            $params[] = (int)$offset;
+        }
+    }
+    $db = Database::getInstance();
+    return $db->fetchAll($sql, $params);
+  }
 }

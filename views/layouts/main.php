@@ -1,77 +1,44 @@
 <?php
-// Définir le titre de la page
-$pageTitle = 'Gestion des Livraisons';
-
-// Inclure le layout principal
-require_once BASE_PATH . '/views/layouts/main.php';
+// Inclure l'en-tête
+include_once BASE_PATH . '/views/layouts/header.php';
 ?>
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Liste des Livraisons</h5>
-                    <?php if ($this->authController->isAdmin() || $this->authController->isStorekeeper()): ?>
-                    <a href="<?= APP_URL ?>/orders/pending" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Nouvelle Livraison
-                    </a>
-                    <?php endif; ?>
+        <!-- Sidebar -->
+        <?php include_once BASE_PATH . '/views/layouts/sidebar.php'; ?>
+        
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><?= $pageTitle ?? 'Tableau de bord' ?></h1>
+                <?php if (isset($actionButtons)): ?>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <?= $actionButtons ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Messages flash -->
+            <?php if (isset($_SESSION['flash_message'])): ?>
+                <div class="alert alert-<?= $_SESSION['flash_type'] ?? 'info' ?> alert-dismissible fade show" role="alert">
+                    <?= $_SESSION['flash_message'] ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                <div class="card-body">
-                    <?php if (empty($deliveries)): ?>
-                        <div class="alert alert-info">
-                            Aucune livraison trouvée.
-                        </div>
-                    <?php else: ?>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Commande</th>
-                                        <th>Client</th>
-                                        <th>Date de livraison</th>
-                                        <th>Statut</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($deliveries as $delivery): ?>
-                                        <tr>
-                                            <td><?= $delivery['id_livraison'] ?></td>
-                                            <td><?= $delivery['numero_commande'] ?></td>
-                                            <td><?= $delivery['nom_client'] . ' ' . $delivery['prenom_client'] ?></td>
-                                            <td><?= date('d/m/Y', strtotime($delivery['date_livraison'])) ?></td>
-                                            <td>
-                                                <?php if ($delivery['statut'] === 'en_cours'): ?>
-                                                    <span class="badge bg-warning">En cours</span>
-                                                <?php elseif ($delivery['statut'] === 'terminee'): ?>
-                                                    <span class="badge bg-success">Terminée</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary"><?= ucfirst($delivery['statut']) ?></span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <a href="<?= APP_URL ?>/deliveries/show/<?= $delivery['id_livraison'] ?>" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <?php if ($delivery['statut'] === 'en_cours' && ($this->authController->isAdmin() || $this->authController->isStorekeeper())): ?>
-                                                    <a href="<?= APP_URL ?>/deliveries/complete/<?= $delivery['id_livraison'] ?>" class="btn btn-sm btn-success">
-                                                        <i class="fas fa-check"></i>
-                                                    </a>
-                                                <?php endif; ?>
-                                                <a href="<?= APP_URL ?>/deliveries/generate-note/<?= $delivery['id_livraison'] ?>" class="btn btn-sm btn-secondary">
-                                                    <i class="fas fa-file-pdf"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                          </table>
-                        </div>
+                <?php 
+                    unset($_SESSION['flash_message']);
+                    unset($_SESSION['flash_type']);
+                ?>
+            <?php endif; ?>
+
+            <!-- Le contenu de la page sera inséré ici -->
+            <?php if (isset($content)): ?>
+                <?= $content ?>
+            <?php endif; ?>
+
         </main>
     </div>
 </div>
-?>
-<?php require_once BASE_PATH . '/views/layouts/footer.php'; ?>
+
+<!-- Footer -->
+<?php include_once BASE_PATH . '/views/layouts/footer.php'; ?>

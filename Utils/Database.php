@@ -1,7 +1,7 @@
 <?php 
-/**
- * Constructeur privé pour empêcher l'instanciation directe
- */
+// use PDO;
+// use PDOException;
+namespace App\Utils;
 class Database{
   private static $instance = null;
   private $connection;
@@ -11,8 +11,8 @@ class Database{
       
       try {
           $dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset={$config['charset']}";
-          $this->connection = new PDO($dsn, $config['username'], $config['password'], $config['options']);
-      } catch (PDOException $e) {
+          $this->connection = new \PDO($dsn, $config['username'], $config['password'], $config['options']);
+      } catch (\PDOException $e) {
           die("Erreur de connexion à la base de données: " . $e->getMessage());
       }
   }
@@ -52,7 +52,7 @@ class Database{
   public function fetch($sql, $params = []) 
   {
       $stmt = $this->query($sql, $params);
-      return $stmt->fetch();
+      return $stmt->fetch(\PDO::FETCH_ASSOC);
   }
 
   /**
@@ -71,7 +71,6 @@ class Database{
   {
       $columns = implode(', ', array_keys($data));
       $placeholders = implode(', ', array_fill(0, count($data), '?'));
-      
       $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
       $this->query($sql, array_values($data));
       
@@ -148,4 +147,45 @@ class Database{
   public function prepare($sql) {
     return $this->connection->prepare($sql);
 }
+
+  /**
+     * Récupérer le dernier ID inséré
+     */
+    public function lastInsertId() 
+    {
+        return $this->connection->lastInsertId();
+    }
+    
+    /**
+     * Échapper une valeur pour l'utiliser dans une requête SQL
+     */
+    public function quote($value) 
+    {
+        return $this->connection->quote($value);
+    }
+    
+    /**
+     * Exécuter une requête SQL et retourner le nombre de lignes affectées
+     */
+    public function exec($sql) 
+    {
+        return $this->connection->exec($sql);
+    }
+    
+    /**
+     * Vérifier si une table existe
+     */
+    public function tableExists($table) 
+    {
+        $result = $this->fetch("SHOW TABLES LIKE ?", [$table]);
+        return !empty($result);
+    }
+    
+    /**
+     * Récupérer les colonnes d'une table
+     */
+    public function getColumns($table) 
+    {
+        return $this->fetchAll("SHOW COLUMNS FROM $table");
+    }
 }
