@@ -2,7 +2,6 @@
 use App\Utils\Database;
   class Auth {
     private $db;
-    
     public function __construct() {
         $this->db = Database::getInstance();
     }

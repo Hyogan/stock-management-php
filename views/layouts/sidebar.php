@@ -109,3 +109,5 @@
         <?php endif; ?>
     </div>
 </nav>
+
+<?php require_once "./sidebar2.php";

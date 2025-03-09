@@ -233,11 +233,9 @@ class ProductController extends Controller{
       }
       
       // Récupérer les mouvements de stock
-      $stockMovements = Product::getStockMovements($id);
-      
+      $stockMovements = Product::getStockMovements($productId);
       // Définir le titre de la page
       $pageTitle = 'Détails du produit: ' . $product['designation'];
-      
       // Afficher la vue
       $this->view('products/show', [
           'pageTitle' => $pageTitle,
@@ -906,7 +904,7 @@ public function generateStockReport() {
   // Créer le PDF (utilisation d'une bibliothèque comme FPDF ou TCPDF)
   require_once BASE_PATH . '/vendor/fpdf/fpdf.php';
   
-  $pdf = new FPDF();
+  $pdf = new \FPDF();
   $pdf->AddPage();
   
   // En-tête
@@ -955,13 +953,14 @@ public function generateStockReport() {
 */
 public function search() {
   // Vérifier les droits d'accès
-  isAdmin();
-  
+  if(!isAdmin())  {
+    return ;
+  }
   // Récupérer le terme de recherche
   $searchTerm = $_GET['q'] ?? '';
-  
   if (empty($searchTerm)) {
       header('Location: ' . APP_URL . '/products');
+      // return view('products/')
       exit;
   }
 }
@@ -971,8 +970,7 @@ public function search() {
 public function searchAdvanced() {
   // Vérifier si l'utilisateur est connecté
   if (!isset($_SESSION['user_id'])) {
-      header('Location: ' . BASE_URL . '/login');
-      exit;
+      return $this->view('login');
   }
 
   // Récupérer les paramètres de recherche
@@ -981,39 +979,43 @@ public function searchAdvanced() {
   $minPrice = isset($_GET['min_price']) ? (float)$_GET['min_price'] : 0;
   $maxPrice = isset($_GET['max_price']) ? (float)$_GET['max_price'] : 0;
   $inStock = isset($_GET['in_stock']) ? (int)$_GET['in_stock'] : -1;
-
   // Effectuer la recherche
   $products = Product::searchAdvanced($keyword, $category, $minPrice, $maxPrice, $inStock);
-  
   // Récupérer les catégories pour le formulaire de recherche
-  $categories = $this->categoryModel->getAll();
-  
+  $categories = Category::getAll();
   // Afficher la vue des résultats de recherche
-  require_once BASE_PATH . '/views/products/search_results.php';
+  return $this->view('products/search_results', [
+    'categories' => $categories,
+    'products' => $products
+  ]);
 }
 /**
 * Afficher les statistiques des produits
 */
 public function statistics() {
     // Vérifier les droits d'accès
-    $this->authController->checkAccess('any');
-    
+    $authController = new AuthController();
+    $authController->checkAccess('any');
     // Récupérer les statistiques
-    $totalProducts = Product::countProducts();
-    $totalValue = Product::getTotalStockValue();
-    $outOfStockCount = Product::getOutOfStock();
-    $lowStockCount = Product::getLowStock();
-    $mostSoldProducts = Product::getMostSold(5);
-    $leastSoldProducts = Product::getLeastSoldProducts(5);
-    $mostProfitableProducts = Product::getMostProfitableProducts(5);
+    // $totalProducts = Product::countProducts();
+    // $totalValue = Product::getTotalStockValue();
+    // $outOfStockCount = Product::getOutOfStock();
+    // $lowStockCount = Product::getLowStock();
+    // $mostSoldProducts = Product::getMostSold(5);
+    // $leastSoldProducts = Product::getLeastSoldProducts(5);
+    // $mostProfitableProducts = Product::getMostProfitableProducts(5);
     
     // Définir le titre de la page
     $pageTitle = 'Statistiques des Produits';
-    
-    // Afficher la vue
-    require_once BASE_PATH . '/views/layouts/header.php';
-    require_once BASE_PATH . '/views/products/statistics.php';
-    require_once BASE_PATH . '/views/layouts/footer.php';
+    return $this->view('products/index',[
+      'totalProducts' => Product::countProducts(),
+      'totalValue' => Product::getTotalStockValue(),
+      'outOfStockCount' => Product::getOutOfStock(),
+      'lowStockCount' => Product::getLowStock(),
+      'mostSoldProducts' => Product::getMostSold(5),
+      'leastSoldProducts' => Product::getLeastSoldProducts(5),
+      'mostProfitableProducts' => Product::getMostProfitableProducts(5),
+    ]);
   }
 
   

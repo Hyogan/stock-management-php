@@ -3,36 +3,39 @@
  * Contrôleur de Commande
  * Gère les opérations CRUD pour les commandes
  */
-class OrderController {
-    private $orderModel;
-    private $productModel;
-    private $userModel;
-    private $authController;
-    
-    public function __construct() {
-        $this->orderModel = new Order();
-        $this->productModel = new Product();
-        $this->userModel = new User();
-        $this->authController = new AuthController();
-    }
+namespace Controllers;
+use App\Models\User;
+use App\Models\Product;
+use App\Models\Order;
+use App\Controllers\AuthController;
+use App\Core\Controller;
+
+class OrderController extends Controller {
+    // public function __construct() {
+    //     $this->orderModel = new Order();
+    //     $this->productModel = new Product();
+    //     $this->userModel = new User();
+    //     $this->authController = new AuthController();
+    // }
     
     /**
      * Afficher la liste des commandes
      */
     public function index() {
         // Vérifier si l'utilisateur est connecté
-        $this->authController->isLoggedIn();
+        $authController = new AuthController();
+        $authController->isLoggedIn();
         
         // Récupérer les commandes selon le rôle de l'utilisateur
-        if ($this->authController->isAdmin()) {
+        if ($authController->isAdmin()) {
             // L'administrateur voit toutes les commandes
-            $orders = $this->orderModel->getAll();
-        } elseif ($this->authController->isStorekeeper()) {
+            $orders = Order::getAll();
+        } elseif ($authController->isStorekeeper()) {
             // Le magasinier voit les commandes approuvées et en attente de livraison
-            $orders = $this->orderModel->getByStatus([ORDER_APPROVED, ORDER_PENDING]);
-        } elseif ($this->authController->isSecretary()) {
+            $orders = Order::getByStatus([ORDER_STATUS_VALIDATED, ORDER_STATUS_PENDING]);
+        } elseif ($authController->isSecretary()) {
             // La secrétaire voit les commandes qu'elle a créées
-            $orders = $this->orderModel->getByUserId($_SESSION['user_id']);
+            $orders = Order::getByUserId($_SESSION['user_id']);
         } else {
             // Rediriger vers la page d'accueil si le rôle n'est pas reconnu
             header('Location: ' . APP_URL);
@@ -40,7 +43,9 @@ class OrderController {
         }
         
         // Afficher la vue
-        require_once BASE_PATH . '/views/orders/index.php';
+        return $this->view('orders/index', [
+          'orders' => $orders
+        ]);
     }
     
     /**
@@ -48,10 +53,10 @@ class OrderController {
      */
     public function show($id) {
         // Vérifier si l'utilisateur est connecté
-        $this->authController->isLoggedIn();
-        
+        $authController = new AuthController();
+        $authController->isLoggedIn();
         // Récupérer la commande
-        $order = $this->orderModel->getById($id);
+        $order = Order::getById($id);
         
         if (!$order) {
             $_SESSION['error_message'] = "La commande demandée n'existe pas.";
@@ -60,36 +65,41 @@ class OrderController {
         }
         
         // Vérifier les droits d'accès
-        if (!$this->authController->isAdmin() && 
-            !($this->authController->isStorekeeper() && in_array($order['statut'], [ORDER_APPROVED, ORDER_PENDING])) && 
-            !($this->authController->isSecretary() && $order['user_id'] == $_SESSION['user_id'])) {
+        if (!$authController->isAdmin() && 
+            !($authController->isStorekeeper() && in_array($order['statut'], [ORDER_APPROVED, ORDER_PENDING])) && 
+            !($authController->isSecretary() && $order['user_id'] == $_SESSION['user_id'])) {
             $_SESSION['error_message'] = "Vous n'avez pas les droits pour accéder à cette commande.";
             header('Location: ' . APP_URL . '/orders');
             exit;
         }
         
         // Récupérer les détails de la commande
-        $orderDetails = $this->orderModel->getOrderDetails($id);
+        $orderDetails = Order::getOrderDetails($id);
         
         // Récupérer l'utilisateur qui a créé la commande
-        $user = $this->userModel->getById($order['user_id']);
+        $user = Order::getById($order['user_id']);
         
         // Afficher la vue
-        require_once BASE_PATH . '/views/orders/show.php';
+        return view('orders/show',[
+          'orderDetails' => $orderDetails,
+          'user' => $user
+        ]);
     }
     
     /**
      * Afficher le formulaire de création de commande
      */
-    public function showCreateForm() {
+    public function showCreateForm() 
+    {
         // Vérifier les droits d'accès (seule la secrétaire peut créer des commandes)
-        $this->authController->checkAccess('secretary');
-        
+        new AuthController()->checkAccess('secretary');
         // Récupérer les produits disponibles
-        $products = $this->productModel->getAll();
+        $products = Product::getAll();
         
-        // Afficher la vue
-        require_once BASE_PATH . '/views/orders/create.php';
+        // Afficher la vuer
+        return $this->view('orders/create',[
+          'products' => $products
+        ]);
     }
     
     /**
@@ -97,7 +107,7 @@ class OrderController {
      */
     public function create() {
         // Vérifier les droits d'accès
-        $this->authController->checkAccess('secretary');
+        new AuthController->checkAccess('secretary');
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Récupérer les données du formulaire

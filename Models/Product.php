@@ -214,7 +214,9 @@ class Product extends Model{
                              ORDER BY p.designation ASC", 
                              [$keyword, $keyword, $keyword]);
     }
-
+    public static function searchAdvanced($keyword, $category, $minPrice, $maxPrice, $inStock) {
+      return self::search($keyword);
+    }
     /**
      * Récupère les mouvements récents de stock
      */

@@ -111,7 +111,6 @@ class ClientController extends Controller {
           ]);
           return;
       }
-      
       // Ajouter le client
       $clientId = Client::create($data);
       

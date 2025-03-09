@@ -2,6 +2,7 @@
 /**
  * Modèle Client
  */
+namespace App\Models;
 
  use App\Core\Model;
  use App\Utils\Database; 
@@ -49,11 +50,6 @@ class Client extends Model{
       $db->query($query, $params);
       return $db->getConnection()->lastInsertId();
   }
-  
-    
-    /**
-     * Mettre à jour un client
-     */
  /**
      * Met à jour un client
      */
@@ -110,9 +106,10 @@ class Client extends Model{
     /**
      * Vérifier la solvabilité d'un client
      */
-    public function checkSolvency($id) {
+    public static function checkSolvency($id) {
         // Récupérer le total des commandes impayées
-        $unpaidOrders = $this->db->fetch(
+        $db  = Database::getInstance();
+        $unpaidOrders = $db->fetch(
             "SELECT SUM(montant) as total_unpaid
              FROM commande
              WHERE id_client = ? AND statut_paiement != 'paid'",

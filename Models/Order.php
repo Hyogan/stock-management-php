@@ -1,19 +1,20 @@
 <?php
+namespace App\Models;
+use App\Core\Model;
+use App\Models\Client;
+use App\Utils\Database;
+use Exception;
 /**
  * Modèle Commande
  */
-class Order {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
-    
+class Order extends Model{
+  protected static $table = 'commande';
     /**
      * Récupérer toutes les commandes
      */
-    public function getAll() {
-        return $this->db->fetchAll(
+    public static function getAll() {
+      $db = Database::getInstance();  
+      return $db->fetchAll(
             "SELECT c.*, cl.nom, cl.prenom
              FROM commande c
              JOIN client cl ON c.id_client = cl.id_client
@@ -50,19 +51,17 @@ class Order {
     /**
      * Créer une nouvelle commande
      */
-    public function create($data, $products) {
+    public function add($data, $products) {
         // Commencer une transaction
         $this->db->getConnection()->beginTransaction();
         
         try {
             // Vérifier la solvabilité du client si nécessaire
             if (isset($data['check_solvency']) && $data['check_solvency']) {
-                $clientModel = new Client();
-                if (!$clientModel->checkSolvency($data['id_client'])) {
+                if (!Client::checkSolvency($data['id_client'])) {
                     throw new Exception("Le client n'est pas solvable pour cette commande.");
                 }
             }
-            
             // Calculer le montant total et le nombre de produits
             $totalAmount = 0;
             foreach ($products as $product) {
@@ -76,8 +75,8 @@ class Order {
                 'montant' => $totalAmount,
                 'nbr_produit' => count($products),
                 'id_client' => $data['id_client'],
-                'statut' => $data['statut'] ?? ORDER_PENDING,
-                'statut_paiement' => $data['statut_paiement'] ?? PAYMENT_PENDING
+                'statut' => $data['statut'] ?? ORDER_STATUS_PENDING,
+                'statut_paiement' => $data['statut_paiement'] ?? PAYMENT_STATUS_PENDING
             ];
             
             $orderId = $this->db->insert('commande', $orderData);
@@ -127,7 +126,7 @@ class Order {
     /**
      * Mettre à jour une commande
      */
-    public function update($id, $data, $products = null) {
+    public function update($id, $data) {
         // Commencer une transaction
         $this->db->getConnection()->beginTransaction();
         
@@ -145,21 +144,21 @@ class Order {
             });
             
             // Si des produits sont fournis, mettre à jour les produits et recalculer le montant
-            if ($products !== null) {
+            if ($data !== null) {
                 // Calculer le montant total et le nombre de produits
                 $totalAmount = 0;
-                foreach ($products as $product) {
+                foreach ($data as $product) {
                     $totalAmount += $product['quantite'] * $product['prix_unitaire'];
                 }
                 
                 $orderData['montant'] = $totalAmount;
-                $orderData['nbr_produit'] = count($products);
+                $orderData['nbr_produit'] = count($data);
                 
                 // Supprimer les produits actuels
                 $this->db->delete('commande_produit', 'numero_commande = ?', [$id]);
                 
                 // Ajouter les nouveaux produits
-                foreach ($products as $product) {
+                foreach ($data as $product) {
                     $this->db->insert('commande_produit', [
                         'numero_commande' => $id,
                         'id_produit' => $product['id_produit'],
@@ -168,7 +167,6 @@ class Order {
                     ]);
                 }
             }
-            
             // Mettre à jour la commande
             if (!empty($orderData)) {
                 $this->db->update('commande', $orderData, 'numero_commande = ?', [$id]);
