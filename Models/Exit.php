@@ -1,6 +1,10 @@
 <?php
-require_once 'Operation.php';
-
+namespace App\Models;
+use App\Core\Model;
+use App\Models\Client;
+use App\Models\Operation;
+use App\Utils\Database;
+use Exception;
 /**
  * Modèle Sortie (hérite d'Opération)
  */
@@ -9,8 +13,9 @@ class ExitOp extends Operation {
     /**
      * Récupérer toutes les sorties
      */
-    public function getAll() {
-        return $this->db->fetchAll(
+    public static function getAll() {
+      $db = Database::getInstance();
+        return $db->fetchAll(
             "SELECT o.*, s.id_sortie, s.client 
              FROM operation o
              JOIN sortie s ON o.numero_operation = s.id_sortie

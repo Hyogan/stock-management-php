@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `utilisateurs` (
   `prenom` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `mot_de_passe` varchar(255) NOT NULL,
-  `role` enum('admin','storekeeper','secretary') NOT NULL DEFAULT 'secretary',
+  `role` enum('admin','magasinier','secretaire') NOT NULL DEFAULT 'secretaire',
   `statut` enum('actif','inactif') NOT NULL DEFAULT 'actif',
   `date_creation` datetime NOT NULL,
   `date_modification` datetime DEFAULT NULL,
@@ -248,11 +248,49 @@ CREATE TABLE IF NOT EXISTS `details_sortie_stock` (
   CONSTRAINT `details_sortie_stock_ibfk_2` FOREIGN KEY (`id_produit`) REFERENCES `produits` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `livraisons` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `reference` varchar(50) NOT NULL,
+  `date_livraison` datetime NOT NULL,
+  `id_utilisateur` int(11) NOT NULL,
+  `destination` varchar(255) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `statut` enum('en_attente','validee','annulee') NOT NULL DEFAULT 'en_attente',
+  `date_creation` datetime NOT NULL,
+  `date_modification` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `reference` (`reference`),
+  KEY `id_utilisateur` (`id_utilisateur`),
+  CONSTRAINT `livraisons_ibfk_1` FOREIGN KEY (`id_utilisateur`) REFERENCES `utilisateurs` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `sorties_stock`
+ADD COLUMN `id_livraison` int(11) DEFAULT NULL,
+ADD KEY `id_livraison` (`id_livraison`),
+ADD CONSTRAINT `sorties_stock_ibfk_3` FOREIGN KEY (`id_livraison`) REFERENCES `livraisons` (`id`) ON DELETE SET NULL;
+
+
+ALTER TABLE `entrees_stock`
+ADD COLUMN `id_livraison` int(11) DEFAULT NULL,
+ADD COLUMN `id_client` int(11) DEFAULT NULL,
+ADD KEY `id_livraison` (`id_livraison`),
+ADD KEY `id_client` (`id_client`),
+ADD CONSTRAINT `entrees_stock_ibfk_3` FOREIGN KEY (`id_livraison`) REFERENCES `livraisons` (`id`) ON DELETE SET NULL,
+ADD CONSTRAINT `sorties_stock_ibfk_4` FOREIGN KEY (`id_client`) REFERENCES `clients` (`id`) ON DELETE SET NULL;
+
+
+
 -- Insertion d'un utilisateur administrateur par défaut
 -- Mot de passe: admin123 (à changer après la première connexion)
-INSERT INTO `utilisateurs` (`nom`, `prenom`, `email`, `mot_de_passe`, `role`, `statut`, `date_creation`) 
-VALUES ('Admin', 'System', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'actif', NOW());
+-- INSERT INTO `utilisateurs` (`nom`, `prenom`, `email`, `mot_de_passe`, `role`, `statut`, `date_creation`) 
+-- VALUES ('Admin', 'System', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'actif', NOW());
+-- VALUES ('Admin', 'System', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'actif', NOW());
 
+INSERT INTO `utilisateurs` (`nom`, `prenom`, `email`, `mot_de_passe`, `role`, `statut`, `date_creation`) 
+VALUES 
+('Admin', 'System', 'admin@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'actif', NOW()),
+('John', 'Doe', 'storekeeper.@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'magasinier', 'actif', NOW()),
+('Jane', 'Smith', 'secretary@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'secretaire', 'actif', NOW());
 -- Insertion de quelques catégories de base
 INSERT INTO `categories` (`nom`, `description`, `statut`, `date_creation`) VALUES
 ('Électronique', 'Produits électroniques et accessoires', 'actif', NOW()),

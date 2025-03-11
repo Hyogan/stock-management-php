@@ -2,20 +2,23 @@
 /**
  * Modèle Livraison
  */
-class Delivery {
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance();
-    }
+namespace App\Models;
+use App\Utils\Database;
+use App\Core\Model;
+
+
+class Delivery extends Model{
+  protected static $table = 'livraisons';    
     
     /**
      * Récupérer toutes les livraisons
      */
-    public function getAll() {
-        return $this->db->fetchAll(
+    public static function getAll() 
+    {
+      $db = Database::getInstance();  
+        return $db->fetchAll(
             "SELECT l.*, s.client
-             FROM livraison l
+             FROM livraisons l
              JOIN sortie s ON l.id_sortie = s.id_sortie
              ORDER BY l.date DESC"
         );
@@ -24,10 +27,12 @@ class Delivery {
     /**
      * Récupérer une livraison par son numéro
      */
-    public function getById($id) {
-        return $this->db->fetch(
+    public function getById($id) 
+    {
+      $db = Database::getInstance();  
+        return $db->fetch(
             "SELECT l.*, s.client
-             FROM livraison l
+             FROM" . self::$table . " l
              JOIN sortie s ON l.id_sortie = s.id_sortie
              WHERE l.numero_livraison = ?",
             [$id]
@@ -37,13 +42,13 @@ class Delivery {
     /**
      * Créer une nouvelle livraison
      */
-    public function create($data) {
+    public static function create($data) {
         // Récupérer les informations de la sortie
         $exitModel = new ExitOp();
         $exit = $exitModel->getById($data['id_sortie']);
         
         if (!$exit) {
-            throw new Exception("La sortie spécifiée n'existe pas.");
+            throw new \Exception("La sortie spécifiée n'existe pas.");
         }
         
         $deliveryData = [
@@ -54,8 +59,8 @@ class Delivery {
             'type' => $data['type'] ?? 'standard',
             'id_sortie' => $data['id_sortie']
         ];
-        
-        return $this->db->insert('livraison', $deliveryData);
+        $db = Database::getInstance();  
+        return $db->insert(self::$table, $deliveryData);
     }
 
     /**
@@ -64,7 +69,7 @@ class Delivery {
 public function getByOrderId($orderId) {
   return $this->db->fetch(
       "SELECT l.*, c.numero_commande, cl.nom as nom_client, cl.prenom as prenom_client
-       FROM livraison l
+       FROM". self::$table ."l
        JOIN commande c ON l.id_commande = c.id_commande
        JOIN client cl ON c.id_client = cl.id_client
        WHERE l.id_commande = ?",
@@ -75,7 +80,8 @@ public function getByOrderId($orderId) {
     /**
      * Mettre à jour une livraison
      */
-    public function update($id, $data) {
+    public static function update($id, $data) 
+    {
         $deliveryData = [
             'date' => $data['date'] ?? null,
             'type' => $data['type'] ?? null
@@ -87,7 +93,8 @@ public function getByOrderId($orderId) {
         });
         
         if (!empty($deliveryData)) {
-            return $this->db->update('livraison', $deliveryData, 'numero_livraison = ?', [$id]);
+            $db = Database::getInstance();
+            return $db->update(self::$table, $deliveryData, 'numero_livraison = ?', [$id]);
         }
         
         return false;
@@ -95,9 +102,10 @@ public function getByOrderId($orderId) {
         /**
      * Mettre à jour le statut d'une livraison
      */
-    public function updateStatus($id, $status) {
+    public function updateStatus($id, $status) 
+    {
       return $this->db->execute(
-          "UPDATE livraison SET statut = ? WHERE id_livraison = ?",
+          "UPDATE". self::$table ."SET statut = ? WHERE id_livraison = ?",
           [$status, $id]
       );
   }
@@ -105,8 +113,10 @@ public function getByOrderId($orderId) {
     /**
      * Supprimer une livraison
      */
-    public function delete($id) {
-        return $this->db->delete('livraison', 'numero_livraison = ?', [$id]);
+    public static function delete($id) 
+    {
+        $db = Database::getInstance();
+        return $db->delete(self::$table, 'numero_livraison = ?', [$id]);
     }
     
     /**
@@ -115,7 +125,7 @@ public function getByOrderId($orderId) {
     public function getByClient($client) {
         return $this->db->fetchAll(
             "SELECT l.*, s.client
-             FROM livraison l
+             FROM".self::$table ."l
              JOIN sortie s ON l.id_sortie = s.id_sortie
              WHERE s.client LIKE ?
              ORDER BY l.date DESC",
@@ -129,7 +139,7 @@ public function getByOrderId($orderId) {
     public function getByPeriod($startDate, $endDate) {
         return $this->db->fetchAll(
             "SELECT l.*, s.client
-             FROM livraison l
+             FROM ". self::$table ." l
              JOIN sortie s ON l.id_sortie = s.id_sortie
              WHERE l.date BETWEEN ? AND ?
              ORDER BY l.date DESC",
@@ -143,7 +153,7 @@ public function getByOrderId($orderId) {
     public function getByType($type) {
         return $this->db->fetchAll(
             "SELECT l.*, s.client
-             FROM livraison l
+             FROM ". self::$table . "l
              JOIN sortie s ON l.id_sortie = s.id_sortie
              WHERE l.type = ?
              ORDER BY l.date DESC",
@@ -196,7 +206,7 @@ public function getByOrderId($orderId) {
         switch ($period) {
             case 'day':
                 $sql = "SELECT DATE(date) as period, COUNT(*) as count, SUM(montant) as total
-                        FROM livraison
+                        FROM ". self::$table ."
                         GROUP BY DATE(date)
                         ORDER BY DATE(date) DESC
                         LIMIT 30";
@@ -204,7 +214,7 @@ public function getByOrderId($orderId) {
             case 'week':
                 $sql = "SELECT YEAR(date) as year, WEEK(date) as week, 
                                COUNT(*) as count, SUM(montant) as total
-                        FROM livraison
+                        FROM " . self::$table . "
                         GROUP BY YEAR(date), WEEK(date)
                         ORDER BY YEAR(date) DESC, WEEK(date) DESC
                         LIMIT 12";
@@ -213,7 +223,7 @@ public function getByOrderId($orderId) {
             default:
                 $sql = "SELECT YEAR(date) as year, MONTH(date) as month, 
                                COUNT(*) as count, SUM(montant) as total
-                        FROM livraison
+                        FROM " . self::$table . "
                         GROUP BY YEAR(date), MONTH(date)
                         ORDER BY YEAR(date) DESC, MONTH(date) DESC
                         LIMIT 12";
@@ -229,7 +239,7 @@ public function getByOrderId($orderId) {
     public function getStatsByType() {
         return $this->db->fetchAll(
             "SELECT type, COUNT(*) as count, SUM(montant) as total
-             FROM livraison
+             FROM " . self::$table . "
              GROUP BY type
              ORDER BY count DESC"
         );

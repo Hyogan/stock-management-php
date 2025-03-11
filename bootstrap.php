@@ -36,8 +36,8 @@ define('APP_VERSION', '1.0.0');
 
 // Définir les constantes pour les rôles
 define('ROLE_ADMIN', 'admin');
-define('ROLE_STOREKEEPER', 'magasinier');
-define('ROLE_SECRETARY', 'secretaire');
+define('ROLE_STOREKEEPER', 'storekeeper');
+define('ROLE_SECRETARY', 'secretary');
 
 // Définir les constantes pour les statuts de commande
 define('ORDER_STATUS_PENDING', 'en_attente');
@@ -45,6 +45,8 @@ define('ORDER_STATUS_VALIDATED', 'validee');
 define('ORDER_STATUS_IN_PROGRESS', 'en_cours');
 define('ORDER_STATUS_DELIVERED', 'livree');
 define('ORDER_STATUS_CANCELLED', 'annulee');
+define('ORDER_STATUS_REJECTED', 'rejetee');
+define('ORDER_STATUS_APPROVED', 'approuvee');
 
 // Définir les constantes pour les statuts de paiement
 define('PAYMENT_STATUS_PENDING', 'en_attente');
@@ -60,6 +62,13 @@ function redirect($url) {
 
 function asset($path) {
     return APP_URL . '/assets/' . $path;
+}
+
+function dd($variable) {
+  echo "<pre>";
+  print_r($variable); // Use print_r for array display
+  echo "</pre>";
+  die();
 }
 
 function url($path) {

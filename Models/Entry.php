@@ -1,6 +1,10 @@
 <?php
-require_once 'Operation.php';
-
+namespace App\Models;
+use App\Core\Model;
+use App\Models\Client;
+use App\Models\Operation;
+use App\Utils\Database;
+use Exception;
 /**
  * Modèle Entrée (hérite d'Opération)
  */
@@ -9,8 +13,9 @@ class Entry extends Operation {
     /**
      * Récupérer toutes les entrées
      */
-    public function getAll() {
-        return $this->db->fetchAll(
+    public static function getAll() {
+      $db = Database::getInstance();
+        return $db->fetchAll(
             "SELECT o.*, e.id_entree, e.fournisseur 
              FROM operation o
              JOIN entree e ON o.numero_operation = e.id_entree

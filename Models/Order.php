@@ -8,11 +8,12 @@ use Exception;
  * Modèle Commande
  */
 class Order extends Model{
-  protected static $table = 'commande';
+  protected static $table = 'commandes';
     /**
      * Récupérer toutes les commandes
      */
-    public static function getAll() {
+    public static function getAll()
+    {
       $db = Database::getInstance();  
       return $db->fetchAll(
             "SELECT c.*, cl.nom, cl.prenom
@@ -126,9 +127,10 @@ class Order extends Model{
     /**
      * Mettre à jour une commande
      */
-    public function update($id, $data) {
+    public static function update($id, $data) {
         // Commencer une transaction
-        $this->db->getConnection()->beginTransaction();
+        $db = Database::getInstance();
+        $db->getConnection()->beginTransaction();
         
         try {
             $orderData = [
@@ -155,11 +157,11 @@ class Order extends Model{
                 $orderData['nbr_produit'] = count($data);
                 
                 // Supprimer les produits actuels
-                $this->db->delete('commande_produit', 'numero_commande = ?', [$id]);
+                $db->delete('commande_produit', 'numero_commande = ?', [$id]);
                 
                 // Ajouter les nouveaux produits
                 foreach ($data as $product) {
-                    $this->db->insert('commande_produit', [
+                    $db->insert('commande_produit', [
                         'numero_commande' => $id,
                         'id_produit' => $product['id_produit'],
                         'quantite' => $product['quantite'],
@@ -169,16 +171,16 @@ class Order extends Model{
             }
             // Mettre à jour la commande
             if (!empty($orderData)) {
-                $this->db->update('commande', $orderData, 'numero_commande = ?', [$id]);
+                $db->update('commande', $orderData, 'numero_commande = ?', [$id]);
             }
             
             // Valider la transaction
-            $this->db->getConnection()->commit();
+            $db->getConnection()->commit();
             
             return true;
         } catch (Exception $e) {
             // Annuler la transaction en cas d'erreur
-            $this->db->getConnection()->rollBack();
+            $db->getConnection()->rollBack();
             throw $e;
         }
     }
@@ -186,13 +188,14 @@ class Order extends Model{
     /**
      * Supprimer une commande
      */
-    public function delete($id) {
+    public static function delete($id) {
         // Commencer une transaction
-        $this->db->getConnection()->beginTransaction();
+        $db = Database::getInstance();
+        $db->getConnection()->beginTransaction();
         
         try {
             // Vérifier si la commande a des sorties associées
-            $exits = $this->db->fetchAll(
+            $exits = $db->fetchAll(
                 "SELECT id_sortie FROM commande_sortie WHERE numero_commande = ?",
                 [$id]
             );
@@ -202,16 +205,16 @@ class Order extends Model{
             }
             
             // Supprimer les produits de la commande
-            $this->db->delete('commande_produit', 'numero_commande = ?', [$id]);
+            $db->delete('commande_produit', 'numero_commande = ?', [$id]);
             // Supprimer la commande
-            $this->db->delete('commande', 'numero_commande = ?', [$id]);
+            $db->delete('commande', 'numero_commande = ?', [$id]);
             // Valider la transaction
-            $this->db->getConnection()->commit();
+            $db->getConnection()->commit();
             
             return true;
         } catch (Exception $e) {
             // Annuler la transaction en cas d'erreur
-            $this->db->getConnection()->rollBack();
+            $db->getConnection()->rollBack();
             throw $e;
         }
     }
@@ -235,7 +238,7 @@ class Order extends Model{
     public function approve($id) {
         return $this->db->update(
             'commande',
-            ['statut' => ORDER_APPROVED],
+            ['statut' => ORDER_STATUS_APPROVED],
             'numero_commande = ?',
             [$id]
         );
@@ -247,7 +250,7 @@ class Order extends Model{
     public function reject($id) {
         return $this->db->update(
             'commande',
-            ['statut' => ORDER_REJECTED],
+            ['statut' => ORDER_STATUS_REJECTED],
             'numero_commande = ?',
             [$id]
         );
@@ -410,10 +413,10 @@ class Order extends Model{
     public function getByUserId($userId) {
       $query = "SELECT * FROM commandes WHERE user_id = :user_id ORDER BY date_commande DESC";
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+      $stmt->bindParam(':user_id', $userId, \PDO::PARAM_INT);
       $stmt->execute();
       
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $stmt->fetchAll(\PDO::FETCH_ASSOC);
   }
     /**
      * Récupérer les détails d'une commande
@@ -421,10 +424,10 @@ class Order extends Model{
     public function getOrderDetails($orderId) {
       $query = "SELECT * FROM commande_details WHERE commande_id = :commande_id";
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':commande_id', $orderId, PDO::PARAM_INT);
+      $stmt->bindParam(':commande_id', $orderId, \PDO::PARAM_INT);
       $stmt->execute();
       
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $stmt->fetchAll(\PDO::FETCH_ASSOC);
   }
 
      /**
@@ -433,8 +436,8 @@ class Order extends Model{
     public function updateDeliveryDate($id, $date) {
       $query = "UPDATE commandes SET date_livraison = :date_livraison WHERE id = :id";
       $stmt = $this->db->prepare($query);
-      $stmt->bindParam(':date_livraison', $date, PDO::PARAM_STR);
-      $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+      $stmt->bindParam(':date_livraison', $date, \PDO::PARAM_STR);
+      $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
       
       return $stmt->execute();
   }
@@ -454,16 +457,16 @@ class Order extends Model{
       $stmt = $this->db->prepare($query);
       $startDateTime = "{$startDate} 00:00:00";
       $endDateTime = "{$endDate} 23:59:59";
-      $stmt->bindParam(':start_date', $startDateTime, PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDateTime, PDO::PARAM_STR);
+      $stmt->bindParam(':start_date', $startDateTime, \PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDateTime, \PDO::PARAM_STR);
       
       if (!empty($status)) {
-          $stmt->bindParam(':statut', $status, PDO::PARAM_STR);
+          $stmt->bindParam(':statut', $status, \PDO::PARAM_STR);
       }
       
       $stmt->execute();
       
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $stmt->fetchAll(\PDO::FETCH_ASSOC);
   }
   
   /**
@@ -482,12 +485,12 @@ class Order extends Model{
       $stmt = $this->db->prepare($query);
       $startDateTime = "{$startDate} 00:00:00";
       $endDateTime = "{$endDate} 23:59:59";
-      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate , PDO::PARAM_STR);
-      $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+      $stmt->bindParam(':start_date', $startDate, \PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate , \PDO::PARAM_STR);
+      $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
       $stmt->execute();
       
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $stmt->fetchAll(\PDO::FETCH_ASSOC);
   }
   
   /**
@@ -531,7 +534,7 @@ class Order extends Model{
       
       $stmt->execute();
       
-      return $stmt->fetchAll(PDO::FETCH_ASSOC);
+      return $stmt->fetchAll(\PDO::FETCH_ASSOC);
   }
 
    /**
@@ -552,11 +555,11 @@ class Order extends Model{
       $stmt = $this->db->prepare($query);
       $startDateTime = "{$startDate} 00:00:00";
       $endDateTime = "{$endDate} 23:59:59";
-      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
+      $stmt->bindParam(':start_date', $startDate, \PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate, \PDO::PARAM_STR);
       $stmt->execute();
       
-      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      $result = $stmt->fetch(\PDO::FETCH_ASSOC);
       $stats['total_commandes'] = $result['total'];
       $stats['total_montant'] = $result['montant'];
       
@@ -569,11 +572,11 @@ class Order extends Model{
       $stmt = $this->db->prepare($query);
       $startDateTime = "{$startDate} 00:00:00";
       $endDateTime = "{$endDate} 23:59:59";
-      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
+      $stmt->bindParam(':start_date', $startDate, \PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate, \PDO::PARAM_STR);
       $stmt->execute();
       
-      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+      while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
           $stats['par_statut'][$row['statut']] = [
               'total' => $row['total'],
               'montant' => $row['montant']
@@ -590,11 +593,11 @@ class Order extends Model{
       $stmt = $this->db->prepare($query);
       $startDateTime = "{$startDate} 00:00:00";
       $endDateTime = "{$endDate} 23:59:59";
-      $stmt->bindParam(':start_date', $startDate, PDO::PARAM_STR);
-      $stmt->bindParam(':end_date', $endDate, PDO::PARAM_STR);
+      $stmt->bindParam(':start_date', $startDate, \PDO::PARAM_STR);
+      $stmt->bindParam(':end_date', $endDate, \PDO::PARAM_STR);
       $stmt->execute();
       
-      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+      while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
           $stats['par_jour'][$row['jour']] = [
               'total' => $row['total'],
               'montant' => $row['montant']
@@ -614,10 +617,32 @@ class Order extends Model{
       $stmt->execute();
       
       $result = [];
-      while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+      while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
           $result[$row['statut']] = $row['total'];
       }
       
       return $result;
   }
+
+  /**
+     * Scope a query to filter orders by a field and value, with optional ordering.
+     *
+     * @param  string  $field
+     * @param  mixed  $value
+     * @param  string|null  $orderByField
+     * @param  string  $orderByDirection
+     */
+    public static function where(string $field, $value, ?string $orderByField = null, string $orderByDirection = 'ASC'): array
+    {
+        $sql = "SELECT * FROM " . self::$table . " WHERE {$field} = ?";
+        $params = [$value];
+
+        if ($orderByField) {
+            $sql .= " ORDER BY " . $orderByField . " " . strtoupper($orderByDirection); // Ensure uppercase for direction
+        }
+        $db = Database::getInstance();
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC); // Fetch as associative array
+    }
 }

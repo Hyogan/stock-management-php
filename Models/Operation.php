@@ -2,6 +2,8 @@
 /**
  * Modèle Opération (classe parent pour Entrée et Sortie)
  */
+namespace App\Models;
+use App\Utils\Database;
 class Operation {
     protected $db;
     protected $table = 'operation';
@@ -13,8 +15,10 @@ class Operation {
     /**
      * Récupérer toutes les opérations
      */
-    public function getAll() {
-        return $this->db->fetchAll("SELECT * FROM operation ORDER BY date DESC");
+    public static function getAll() 
+    {
+      $db = Database::getInstance();
+        return $db->fetchAll("SELECT * FROM operation ORDER BY date DESC");
     }
     
     /**

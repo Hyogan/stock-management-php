@@ -2,28 +2,31 @@
 namespace App\Controllers;
 
 use App\Utils\Auth;
+use App\Core\Controller;
 use App\Models\Product;
+use App\Models\Entry;
+use App\Models\Delivery;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\ExitOp;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         if (!Auth::isLoggedIn()) {
-            redirect('/login'); // Redirect if not logged in
+          // die('bonjour');
+            $this->redirect('/auth/login'); // Redirect if not logged in
         }
-
         $userRole = $_SESSION['user_role'];
-
         switch ($userRole) {
             case 'admin':
                 $this->adminDashboard();
                 break;
-            case 'secretaire':
+            case 'secretary':
                 $this->secretaryDashboard();
                 break;
-            case 'magasinier':
+            case 'storekeeper':
                 $this->storekeeperDashboard();
                 break;
             default:
@@ -37,7 +40,7 @@ class DashboardController extends Controller
     {
         // Fetch data for the director's dashboard
         $products = Product::getAll(); // Example: Fetch all products
-        $orders = Order::where('status', 'en_attente'); // Example: Fetch pending orders
+        $orders = Order::where('statut', 'en_attente'); // Example: Fetch pending orders
         $users = User::getAll();
 
         // Load the admin dashboard view
@@ -51,7 +54,7 @@ class DashboardController extends Controller
     private function secretaryDashboard()
     {
         // Fetch data for the secretary's dashboard
-        $orders = Order::where('status', 'en_attente'); // Example: Fetch pending orders
+        $orders = Order::where('statut', 'en_attente'); // Example: Fetch pending orders
         $deliveries = Delivery::getAll(); // Example: Fetch recent deliveries
         // ... fetch other data
 
@@ -68,8 +71,8 @@ class DashboardController extends Controller
         // Fetch data for the storekeeper's dashboard
         $products = Product::getAll(); // Example: Fetch all products
         $entries = Entry::getAll(); // Example: Fetch recent entries
-        $exits = Exit::getAll(); // example fetch recent exits.
-        $orders = Order::where('status', 'en_attente');
+        $exits = ExitOp::getAll(); // example fetch recent exits.
+        $orders = Order::where('statut', 'en_attente');
 
         // Load the storekeeper dashboard view
         $this->view('dashboard/storekeeper', [

@@ -1,4 +1,5 @@
 <?php
+namespace App\Utils;
 use App\Utils\Database;
   class Auth {
     private $db;
@@ -9,8 +10,10 @@ use App\Utils\Database;
     /**
      * Authentifier un utilisateur
      */
-    public function login($username, $password) {
-        $user = $this->db->fetch("SELECT * FROM utilisateur WHERE nom = ?", [$username]);
+    public static function login($username, $password)
+     {
+       $db =  Database::getInstance();
+        $user = $db->fetch("SELECT * FROM utilisateur WHERE nom = ?", [$username]);
         
         if ($user && password_verify($password, $user['mot_de_passe'])) {
             // Stocker les informations de l'utilisateur en session
@@ -18,7 +21,6 @@ use App\Utils\Database;
             $_SESSION['username'] = $user['nom'];
             $_SESSION['user_type'] = $user['type'];
             $_SESSION['logged_in'] = true;
-            
             return true;
         }
         
@@ -43,8 +45,9 @@ use App\Utils\Database;
     /**
      * Vérifier si l'utilisateur est connecté
      */
-    public function isLoggedIn() {
-        return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+    public static function isLoggedIn() 
+    {
+      return isset($_SESSION['user_id']);
     }
     
     /**

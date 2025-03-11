@@ -7,16 +7,17 @@ namespace App\Controllers;
 use Exception;
 use App\Core\Controller;
 use App\Models\User;
+use App\Utils\Auth;
 use App\Utils\Database;
 class AuthController extends Controller{
     /**
      * Afficher le formulaire de connexion
      */
     public function login() {
+        // die('hi everyone');
         // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
-        if ($this->isLoggedIn()) {
+        if (Auth::isLoggedIn()) {
           $this->redirect('/dashboard');
-          exit;
         }
         $this->view('auth/login', [
           'pageTitle' => 'Connexion'
@@ -26,6 +27,7 @@ class AuthController extends Controller{
 
     public function register() 
     {
+      
       // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
       if ($this->isLoggedIn()) {
           $this->redirect('/dashboard');
@@ -38,8 +40,10 @@ class AuthController extends Controller{
   }
 
 
-  public function store() {
+  public function store()
+   {
     // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
+    
     if ($this->isLoggedIn()) {
         $this->redirect('/dashboard');
         exit;
@@ -120,13 +124,12 @@ class AuthController extends Controller{
     /**
      * Traiter la connexion
      */
-    public function authenticate() {
+    public function authenticate() 
+    {
+      // die('hi everyone');
         // Si l'utilisateur est déjà connecté, rediriger vers le tableau de bord
-        if ($this->isLoggedIn()) {
-            $this->view('auth/login', [
-              'pageTitle' => 'Connexion'
-            ]);
-            exit;
+        if (Auth::isLoggedIn()) {
+            $this->redirect('/dashboard');
         }
         
         // Vérifier si le formulaire a été soumis
@@ -149,12 +152,16 @@ class AuthController extends Controller{
             ]);
             return;
         }
+        
         $user = User::getByEmail($email);
         if (!$user || !password_verify($password, $user['mot_de_passe'])) {
-          $this->view('auth/login', [
-              'pageTitle' => 'Connexion',
-              'email' => $email,
-              'error' => 'Identifiants incorrects'
+          // $data = [
+           
+          // ];
+          $this->view('auth/login',[
+            'pageTitle' => 'Connexion',
+            'email' => $email,
+            'error' => 'Identifiants incorrects'
           ]);
           return;
       }
@@ -173,7 +180,10 @@ class AuthController extends Controller{
       $_SESSION['user_id'] = $user['id'];
       $_SESSION['user_name'] = $user['prenom'] . ' ' . $user['nom'];
       $_SESSION['user_email'] = $user['email'];
-      $_SESSION['user_role'] = $user['role'];
+      $_SESSION['logged_in'] = $user['role'];
+      // die($user);
+
+      // var_dump('fsdfsd');
       
       // Si "Se souvenir de moi" est coché, créer un cookie
       if ($remember) {
@@ -218,7 +228,8 @@ class AuthController extends Controller{
     /**
      * Vérifier si l'utilisateur est connecté
      */
-    public function isLoggedIn() {
+    public function isLoggedIn() 
+    {
         return isset($_SESSION['user_id']);
     }
      /**

@@ -1,5 +1,4 @@
 <?php require_once VIEW_PATH . '/layouts/auth_header.php'; ?>
-
   <div class="auth-form">
     <h2 class="text-center mb-4">Connexion</h2>
 
