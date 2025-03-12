@@ -44,10 +44,14 @@ class Database {
      */
     public function query($sql, $params = []) 
     {
-        $stmt = $this->connection->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
-    }
+        try {
+            $stmt = $this->connection->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (\PDOException $e) {
+            die("Erreur SQL : " . $e->getMessage());
+        }
+      }
 
     /**
      * Récupérer une seule ligne

@@ -6,242 +6,169 @@ namespace App\Models;
 use App\Utils\Database;
 use App\Core\Model;
 
+class Delivery extends Model {
+    protected static $table = 'livraisons';
 
-class Delivery extends Model{
-  protected static $table = 'livraisons';    
-    
     /**
      * Récupérer toutes les livraisons
      */
-    public static function getAll() 
-    {
-      $db = Database::getInstance();  
+    public static function getAll() {
+        $db = Database::getInstance();
         return $db->fetchAll(
-            "SELECT l.*, s.client
+            "SELECT l.*, u.nom as utilisateur_nom, u.prenom as utilisateur_prenom, es.id_client, ss.id_commande
              FROM livraisons l
-             JOIN sortie s ON l.id_sortie = s.id_sortie
-             ORDER BY l.date DESC"
+             LEFT JOIN utilisateurs u ON l.id_utilisateur = u.id
+             LEFT JOIN entrees_stock es ON l.id = es.id_livraison
+             LEFT JOIN sorties_stock ss ON l.id = ss.id_livraison
+             ORDER BY l.date_livraison DESC"
         );
     }
-    
+
     /**
-     * Récupérer une livraison par son numéro
+     * Récupérer une livraison par son ID
      */
-    public function getById($id) 
-    {
-      $db = Database::getInstance();  
+    public function getById($id) {
+        $db = Database::getInstance();
         return $db->fetch(
-            "SELECT l.*, s.client
-             FROM" . self::$table . " l
-             JOIN sortie s ON l.id_sortie = s.id_sortie
-             WHERE l.numero_livraison = ?",
+            "SELECT l.*, u.nom as utilisateur_nom, u.prenom as utilisateur_prenom, es.id_client, ss.id_commande
+             FROM livraisons l
+             LEFT JOIN utilisateurs u ON l.id_utilisateur = u.id
+             LEFT JOIN entrees_stock es ON l.id = es.id_livraison
+             LEFT JOIN sorties_stock ss ON l.id = ss.id_livraison
+             WHERE l.id = ?",
             [$id]
         );
     }
-    
+
     /**
      * Créer une nouvelle livraison
      */
     public static function create($data) {
-        // Récupérer les informations de la sortie
-        $exitModel = new ExitOp();
-        $exit = $exitModel->getById($data['id_sortie']);
-        
-        if (!$exit) {
-            throw new \Exception("La sortie spécifiée n'existe pas.");
-        }
-        
         $deliveryData = [
-            'numero_livraison' => $data['numero_livraison'] ?? generateReference('LIV'),
-            'date' => $data['date'] ?? date('Y-m-d H:i:s'),
-            'montant' => $exit['prix'],
-            'nombre_produit' => $exit['nombre_produit'],
-            'type' => $data['type'] ?? 'standard',
-            'id_sortie' => $data['id_sortie']
+            'reference' => $data['reference'] ?? generateReference('LIV'),
+            'date_livraison' => $data['date_livraison'] ?? date('Y-m-d H:i:s'),
+            'id_utilisateur' => $data['id_utilisateur'],
+            'destination' => $data['destination'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'statut' => $data['statut'] ?? 'en_attente',
+            'date_creation' => date('Y-m-d H:i:s'),
         ];
-        $db = Database::getInstance();  
-        return $db->insert(self::$table, $deliveryData);
+        $db = Database::getInstance();
+        $deliveryId = $db->insert(self::$table, $deliveryData);
+
+        // link the delivery to the correct table
+        if(isset($data['id_entree'])){
+            $db->update('entrees_stock',['id_livraison'=>$deliveryId],'id = ?',[$data['id_entree']]);
+        }
+        if(isset($data['id_sortie'])){
+            $db->update('sorties_stock',['id_livraison'=>$deliveryId],'id = ?',[$data['id_sortie']]);
+        }
+
+        return $deliveryId;
     }
 
     /**
- * Récupérer une livraison par l'ID de commande
- */
-public function getByOrderId($orderId) {
-  return $this->db->fetch(
-      "SELECT l.*, c.numero_commande, cl.nom as nom_client, cl.prenom as prenom_client
-       FROM". self::$table ."l
-       JOIN commande c ON l.id_commande = c.id_commande
-       JOIN client cl ON c.id_client = cl.id_client
-       WHERE l.id_commande = ?",
-      [$orderId]
-  );
-}
-    
-    /**
      * Mettre à jour une livraison
      */
-    public static function update($id, $data) 
-    {
+    public static function update($id, $data) {
         $deliveryData = [
-            'date' => $data['date'] ?? null,
-            'type' => $data['type'] ?? null
+            'date_livraison' => $data['date_livraison'] ?? null,
+            'destination' => $data['destination'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'statut' => $data['statut'] ?? null,
+            'date_modification' => date('Y-m-d H:i:s'),
         ];
-        
-        // Filtrer les valeurs null
-        $deliveryData = array_filter($deliveryData, function($value) {
+
+        $deliveryData = array_filter($deliveryData, function ($value) {
             return $value !== null;
         });
-        
+
         if (!empty($deliveryData)) {
             $db = Database::getInstance();
-            return $db->update(self::$table, $deliveryData, 'numero_livraison = ?', [$id]);
+            return $db->update(self::$table, $deliveryData, 'id = ?', [$id]);
         }
-        
+
         return false;
     }
-        /**
+
+    /**
      * Mettre à jour le statut d'une livraison
      */
-    public function updateStatus($id, $status) 
-    {
-      return $this->db->execute(
-          "UPDATE". self::$table ."SET statut = ? WHERE id_livraison = ?",
-          [$status, $id]
-      );
-  }
-    
+    public function updateStatus($id, $status) {
+        $db = Database::getInstance();
+        return $db->execute("UPDATE livraisons SET statut = ? WHERE id = ?", [$status, $id]);
+    }
+
     /**
      * Supprimer une livraison
      */
-    public static function delete($id) 
-    {
+    public static function delete($id) {
         $db = Database::getInstance();
-        return $db->delete(self::$table, 'numero_livraison = ?', [$id]);
+        return $db->delete(self::$table, 'id = ?', [$id]);
     }
-    
+
     /**
-     * Récupérer les livraisons par client
+     * Récupérer les livraisons par utilisateur
      */
-    public function getByClient($client) {
-        return $this->db->fetchAll(
-            "SELECT l.*, s.client
-             FROM".self::$table ."l
-             JOIN sortie s ON l.id_sortie = s.id_sortie
-             WHERE s.client LIKE ?
-             ORDER BY l.date DESC",
-            ["%{$client}%"]
+    public function getByUser($userId) {
+        $db = Database::getInstance();
+        return $db->fetchAll(
+            "SELECT l.*, u.nom as utilisateur_nom, u.prenom as utilisateur_prenom, es.id_client, ss.id_commande
+             FROM livraisons l
+             LEFT JOIN utilisateurs u ON l.id_utilisateur = u.id
+             LEFT JOIN entrees_stock es ON l.id = es.id_livraison
+             LEFT JOIN sorties_stock ss ON l.id = ss.id_livraison
+             WHERE l.id_utilisateur = ?
+             ORDER BY l.date_livraison DESC",
+            [$userId]
         );
     }
-    
+
     /**
      * Récupérer les livraisons par période
      */
     public function getByPeriod($startDate, $endDate) {
-        return $this->db->fetchAll(
-            "SELECT l.*, s.client
-             FROM ". self::$table ." l
-             JOIN sortie s ON l.id_sortie = s.id_sortie
-             WHERE l.date BETWEEN ? AND ?
-             ORDER BY l.date DESC",
+        $db = Database::getInstance();
+        return $db->fetchAll(
+            "SELECT l.*, u.nom as utilisateur_nom, u.prenom as utilisateur_prenom, es.id_client, ss.id_commande
+             FROM livraisons l
+             LEFT JOIN utilisateurs u ON l.id_utilisateur = u.id
+             LEFT JOIN entrees_stock es ON l.id = es.id_livraison
+             LEFT JOIN sorties_stock ss ON l.id = ss.id_livraison
+             WHERE l.date_livraison BETWEEN ? AND ?
+             ORDER BY l.date_livraison DESC",
             [$startDate, $endDate]
         );
     }
-    
-    /**
-     * Récupérer les livraisons par type
-     */
-    public function getByType($type) {
-        return $this->db->fetchAll(
-            "SELECT l.*, s.client
-             FROM ". self::$table . "l
-             JOIN sortie s ON l.id_sortie = s.id_sortie
-             WHERE l.type = ?
-             ORDER BY l.date DESC",
-            [$type]
-        );
-    }
-    
-    /**
-     * Récupérer les produits d'une livraison
-     */
-    public function getProducts($id) {
-        $delivery = $this->getById($id);
-        
-        if (!$delivery) {
-            return [];
-        }
-        
-        $exitModel = new ExitOp();
-        return $exitModel->getProducts($delivery['id_sortie']);
-    }
-    
-    /**
-     * Générer un bon de livraison
-     */
-    public function generateDeliveryNote($id) {
-        $delivery = $this->getById($id);
-        $products = $this->getProducts($id);
-        
-        // Récupérer les informations du client
-        $exitModel = new ExitOp();
-        $exit = $exitModel->getById($delivery['id_sortie']);
-        
-        // Ici, vous pourriez générer un PDF ou simplement retourner les données
-        return [
-            'delivery' => $delivery,
-            'exit' => $exit,
-            'products' => $products,
-            'delivery_note_number' => $delivery['numero_livraison'],
-            'delivery_date' => $delivery['date'],
-            'total' => $delivery['montant']
-        ];
-    }
-    
+
     /**
      * Récupérer les statistiques des livraisons par période
      */
     public function getStatsByPeriod($period = 'month') {
+        $db = Database::getInstance();
         $sql = "";
-        
+
         switch ($period) {
             case 'day':
-                $sql = "SELECT DATE(date) as period, COUNT(*) as count, SUM(montant) as total
-                        FROM ". self::$table ."
-                        GROUP BY DATE(date)
-                        ORDER BY DATE(date) DESC
-                        LIMIT 30";
+                $sql = "SELECT DATE(date_livraison) as period, COUNT(*) as count FROM livraisons GROUP BY DATE(date_livraison) ORDER BY DATE(date_livraison) DESC LIMIT 30";
                 break;
             case 'week':
-                $sql = "SELECT YEAR(date) as year, WEEK(date) as week, 
-                               COUNT(*) as count, SUM(montant) as total
-                        FROM " . self::$table . "
-                        GROUP BY YEAR(date), WEEK(date)
-                        ORDER BY YEAR(date) DESC, WEEK(date) DESC
-                        LIMIT 12";
+                $sql = "SELECT YEAR(date_livraison) as year, WEEK(date_livraison) as week, COUNT(*) as count FROM livraisons GROUP BY YEAR(date_livraison), WEEK(date_livraison) ORDER BY YEAR(date_livraison) DESC, WEEK(date_livraison) DESC LIMIT 12";
                 break;
             case 'month':
             default:
-                $sql = "SELECT YEAR(date) as year, MONTH(date) as month, 
-                               COUNT(*) as count, SUM(montant) as total
-                        FROM " . self::$table . "
-                        GROUP BY YEAR(date), MONTH(date)
-                        ORDER BY YEAR(date) DESC, MONTH(date) DESC
-                        LIMIT 12";
+                $sql = "SELECT YEAR(date_livraison) as year, MONTH(date_livraison) as month, COUNT(*) as count FROM livraisons GROUP BY YEAR(date_livraison), MONTH(date_livraison) ORDER BY YEAR(date_livraison) DESC, MONTH(date_livraison) DESC LIMIT 12";
                 break;
         }
-        
-        return $this->db->fetchAll($sql);
+
+        return $db->fetchAll($sql);
     }
-    
+
     /**
-     * Récupérer les statistiques des livraisons par type
+     * Récupérer les statistiques des livraisons par statut
      */
-    public function getStatsByType() {
-        return $this->db->fetchAll(
-            "SELECT type, COUNT(*) as count, SUM(montant) as total
-             FROM " . self::$table . "
-             GROUP BY type
-             ORDER BY count DESC"
-        );
+    public function getStatsByStatus() {
+        $db = Database::getInstance();
+        return $db->fetchAll("SELECT statut, COUNT(*) as count FROM livraisons GROUP BY statut ORDER BY count DESC");
     }
 }

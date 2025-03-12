@@ -5,252 +5,240 @@ use App\Models\Client;
 use App\Models\Operation;
 use App\Utils\Database;
 use Exception;
+
 /**
- * Modèle Entrée (hérite d'Opération)
+ * Modèle Entrée
  */
 class Entry extends Operation {
-    
+    protected static $table = 'entrees_stock';
+
     /**
      * Récupérer toutes les entrées
      */
     public static function getAll() {
-      $db = Database::getInstance();
+        $db = Database::getInstance();
         return $db->fetchAll(
-            "SELECT o.*, e.id_entree, e.fournisseur 
-             FROM operation o
-             JOIN entree e ON o.numero_operation = e.id_entree
-             ORDER BY o.date DESC"
+            "SELECT e.*, u.nom as nom_utilisateur 
+             FROM entrees_stock e
+             LEFT JOIN utilisateurs u ON e.id_utilisateur = u.id
+             ORDER BY e.date_entree DESC"
         );
     }
-    
+
     /**
      * Récupérer une entrée par son ID
      */
-    public function getById($id) {
-        return $this->db->fetch(
-            "SELECT o.*, e.id_entree, e.fournisseur 
-             FROM operation o
-             JOIN entree e ON o.numero_operation = e.id_entree
-             WHERE e.id_entree = ?",
+    public static function getById($id) {
+        $db = Database::getInstance();
+        return $db->fetch(
+            "SELECT e.*, u.nom as nom_utilisateur
+             FROM entrees_stock e
+             LEFT JOIN utilisateurs u ON e.id_utilisateur = u.id
+             WHERE e.id = ?",
             [$id]
         );
     }
-    
+
     /**
      * Créer une nouvelle entrée
      */
-      public function create($data, $products = []) 
-      {
+    public static function create($data, $products = []) {
+        $db = Database::getInstance();
         try {
-            // Démarrer une transaction
-            $this->db->beginTransaction();
-            
-            // Insérer l'entrée principale
-            $entryId = $this->db->insert('entree_stock', [
+            $db->beginTransaction();
+
+            $entryId = $db->insert('entrees_stock', [
+                'reference' => $data['reference'] ?? generateReference('ENT'),
                 'date_entree' => $data['date_entree'],
-                'fournisseur' => $data['fournisseur'],
-                'reference_document' => $data['reference_document'],
+                'id_fournisseur' => $data['id_fournisseur'],
                 'notes' => $data['notes'],
-                'id_utilisateur' => $data['id_utilisateur']
+                'id_utilisateur' => $data['id_utilisateur'],
+                'date_creation' => date('Y-m-d H:i:s'),
             ]);
-            
-            // Insérer les détails des produits
+
             if (!empty($products)) {
                 foreach ($products as $product) {
-                    $this->db->insert('detail_entree', [
+                    $db->insert('details_entree_stock', [
                         'id_entree' => $entryId,
                         'id_produit' => $product['id_produit'],
                         'quantite' => $product['quantite'],
-                        'prix_unitaire' => $product['prix_unitaire']
+                        'prix_unitaire' => $product['prix_unitaire'],
+                        'montant_total' => $product['quantite'] * $product['prix_unitaire'],
                     ]);
-                    
-                    // Mettre à jour le stock du produit
-                    $this->updateProductStock($product['id_produit'], $product['quantite'],'+');
+
+                    self::updateProductStock($product['id_produit'], $product['quantite'], '+');
                 }
             }
-            
-            // Valider la transaction
-            $this->db->commit();
-            
+
+            $db->commit();
             return $entryId;
         } catch (Exception $e) {
-            // Annuler la transaction en cas d'erreur
-            $this->db->rollback();
+            $db->rollBack();
             throw $e;
         }
-      }
-    
+    }
+
     /**
      * Mettre à jour une entrée
      */
-    public function update($id, $data, $products = null) {
-        // Commencer une transaction
-        $this->db->getConnection()->beginTransaction();
-        
+    public static function update($id, $data, $products = null) {
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
         try {
-            // Mettre à jour l'opération
-            $operationData = [
-                'date' => $data['date'] ?? null
-            ];
-            
-            if ($products !== null) {
-                $operationData['nombre_produit'] = count($products);
-            }
-            
-            if (!empty($operationData)) {
-                parent::update($id, $operationData);
-            }
-            
-            // Mettre à jour l'entrée
             $entryData = [
-                'fournisseur' => $data['fournisseur'] ?? null
+                'date_entree' => $data['date_entree'] ?? null,
+                'id_fournisseur' => $data['id_fournisseur'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'date_modification' => date('Y-m-d H:i:s'),
             ];
-            
-            if (!empty(array_filter($entryData, function($value) { return $value !== null; }))) {
-                $this->db->update('entree', $entryData, 'id_entree = ?', [$id]);
+
+            $entryData = array_filter($entryData, function ($value) {
+                return $value !== null;
+            });
+
+            if (!empty($entryData)) {
+                $db->update('entrees_stock', $entryData, 'id = ?', [$id]);
             }
-            
-            // Si des produits sont fournis, mettre à jour les produits
+
             if ($products !== null) {
-                $productModel = new Product();
-                
-                // Récupérer les produits actuels pour annuler leur effet sur le stock
-                $currentProducts = parent::getProducts($id);
+                $currentProducts = self::getProducts($id);
                 foreach ($currentProducts as $product) {
-                    $productModel->updateStock($product['id_produit'], $product['quantite'],'-');
+                    self::updateProductStock($product['id_produit'], $product['quantite'], '-');
                 }
-                
-                // Supprimer les produits actuels
-                $this->db->delete('operation_produit', 'numero_operation = ?', [$id]);
-                
-                // Ajouter les nouveaux produits
+
+                $db->delete('details_entree_stock', 'id_entree = ?', [$id]);
+
                 foreach ($products as $product) {
-                    parent::addProduct(
-                        $id,
-                        $product['id_produit'],
-                        $product['quantite'],
-                        $product['prix_unitaire']
-                    );
-                    
-                    // Mettre à jour le stock
-                    $productModel->updateStock($product['id_produit'], $product['quantite'],'+');
+                    $db->insert('details_entree_stock', [
+                        'id_entree' => $id,
+                        'id_produit' => $product['id_produit'],
+                        'quantite' => $product['quantite'],
+                        'prix_unitaire' => $product['prix_unitaire'],
+                        'montant_total' => $product['quantite'] * $product['prix_unitaire'],
+                    ]);
+
+                    self::updateProductStock($product['id_produit'], $product['quantite'], '+');
                 }
-                
-                // Mettre à jour le total de l'opération
-                parent::updateTotal($id);
             }
-            
-            // Valider la transaction
-            $this->db->getConnection()->commit();
-            
+
+            $db->commit();
             return true;
         } catch (Exception $e) {
-            // Annuler la transaction en cas d'erreur
-            $this->db->getConnection()->rollBack();
+            $db->rollBack();
             throw $e;
         }
     }
 
-    protected function updateProductStock($productId, $quantity,$type) {
-      $productModel = new Product();
-      return $productModel->updateStock($productId, $quantity, $type);
-  }
-    
+    protected static function updateProductStock($productId, $quantity, $type) {
+        $productModel = new Product();
+        return $productModel->updateStock($productId, $quantity, $type);
+    }
+
     /**
      * Supprimer une entrée
      */
-    public function delete($id) {
-        // Commencer une transaction
-        $this->db->getConnection()->beginTransaction();
-        
+    public static function delete($id) {
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
         try {
-            $productModel = new Product();
-            
-            // Récupérer les produits pour annuler leur effet sur le stock
-            $products = parent::getProducts($id);
-            foreach ($products as $product) {
-                $productModel->updateStock($product['id_produit'], $product['quantite'],'-');
+            $currentProducts = self::getProducts($id);
+            foreach ($currentProducts as $product) {
+                self::updateProductStock($product['id_produit'], $product['quantite'], '-');
             }
-            
-            // Supprimer l'entrée
-            $this->db->delete('entree', 'id_entree = ?', [$id]);
-            
-            // Supprimer l'opération et ses produits associés
-            parent::delete($id);
-            
-            // Valider la transaction
-            $this->db->getConnection()->commit();
-            
+
+            $db->delete('details_entree_stock', 'id_entree = ?', [$id]);
+            $db->delete('entrees_stock', 'id = ?', [$id]);
+
+            $db->commit();
             return true;
         } catch (Exception $e) {
-            // Annuler la transaction en cas d'erreur
-            $this->db->getConnection()->rollBack();
+            $db->rollBack();
             throw $e;
         }
     }
-    
+
     /**
      * Récupérer les entrées par fournisseur
      */
-    public function getBySupplier($supplier) {
-        return $this->db->fetchAll(
-            "SELECT o.*, e.id_entree, e.fournisseur 
-             FROM operation o
-             JOIN entree e ON o.numero_operation = e.id_entree
-             WHERE e.fournisseur LIKE ?
-             ORDER BY o.date DESC",
+    public static function getBySupplier($supplier) {
+        $db = Database::getInstance();
+        return $db->fetchAll(
+            "SELECT e.*, u.nom as nom_utilisateur
+             FROM entrees_stock e
+             LEFT JOIN utilisateurs u ON e.id_utilisateur = u.id
+             LEFT JOIN fournisseurs f ON e.id_fournisseur = f.id
+             WHERE f.nom LIKE ?
+             ORDER BY e.date_entree DESC",
             ["%{$supplier}%"]
         );
-    }
+      }
 
-    /**
- * Récupérer les entrées par période
- */
-  public function getByPeriod($startDate, $endDate, $type = null) {
-    $sql = "SELECT e.*, u.nom as nom_utilisateur 
-            FROM entree_stock e
-            JOIN utilisateur u ON e.id_utilisateur = u.id_utilisateur
-            WHERE e.date_entree BETWEEN ? AND ?";
-    
-    $params = [$startDate, $endDate];
-    
-    // Si un type spécifique est demandé
-    if ($type !== null) {
-        $sql .= " AND e.type = ?";
-        $params[] = $type;
-    }
-    
-    $sql .= " ORDER BY e.date_entree DESC";
-    
-    return $this->db->fetchAll($sql, $params);
+      /**
+       * Récupérer les entrées par période
+       */
+      public static function getByPeriod($startDate, $endDate, $type = null) {
+          $db = Database::getInstance();
+          $sql = "SELECT e.*, u.nom as nom_utilisateur 
+                  FROM entrees_stock e
+                  JOIN utilisateurs u ON e.id_utilisateur = u.id
+                  WHERE e.date_entree BETWEEN ? AND ?";
+  
+          $params = [$startDate, $endDate];
+  
+          if ($type !== null) {
+              $sql .= " AND e.type_operation = ?";
+              $params[] = $type;
+          }
+  
+          $sql .= " ORDER BY e.date_entree DESC";
+  
+          return $db->fetchAll($sql, $params);
+      }
+  
+      /**
+       * Récupérer les statistiques des entrées par fournisseur
+       */
+      public static function getStatsBySupplier() {
+          $db = Database::getInstance();
+          return $db->fetchAll(
+              "SELECT f.nom as fournisseur, COUNT(e.id) as count, SUM(des.montant_total) as total
+               FROM entrees_stock e
+               LEFT JOIN fournisseurs f ON e.id_fournisseur = f.id
+               LEFT JOIN details_entree_stock des ON e.id = des.id_entree
+               GROUP BY e.id_fournisseur
+               ORDER BY total DESC"
+          );
+      }
+  
+      /**
+       * Récupérer les statistiques des entrées par produit
+       */
+      public static function getStatsByProduct() {
+          $db = Database::getInstance();
+          return $db->fetchAll(
+              "SELECT p.id as id_produit, p.designation, SUM(des.quantite) as total_quantity, 
+                      SUM(des.montant_total) as total_value
+               FROM entrees_stock e
+               LEFT JOIN details_entree_stock des ON e.id = des.id_entree
+               LEFT JOIN produits p ON des.id_produit = p.id
+               GROUP BY des.id_produit
+               ORDER BY total_value DESC"
+          );
+      }
+  
+      /**
+       * Récupérer les produits d'une entrée
+       */
+      public static function getProducts($entryId) {
+          $db = Database::getInstance();
+          return $db->fetchAll(
+              "SELECT des.*, p.designation, p.prix_vente, p.prix_achat 
+               FROM details_entree_stock des
+               JOIN produits p ON des.id_produit = p.id
+               WHERE des.id_entree = ?",
+              [$entryId]
+          );
+      }
   }
-    
-    /**
-     * Récupérer les statistiques des entrées par fournisseur
-     */
-    public function getStatsBySupplier() {
-        return $this->db->fetchAll(
-            "SELECT e.fournisseur, COUNT(*) as count, SUM(o.prix) as total
-             FROM operation o
-             JOIN entree e ON o.numero_operation = e.id_entree
-             GROUP BY e.fournisseur
-             ORDER BY total DESC"
-        );
-    }
-    
-    /**
-     * Récupérer les statistiques des entrées par produit
-     */
-    public function getStatsByProduct() {
-        return $this->db->fetchAll(
-            "SELECT p.id_produit, p.designation, SUM(op.quantite) as total_quantity, 
-                    SUM(op.quantite * op.prix_unitaire) as total_value
-             FROM operation o
-             JOIN operation_produit op ON o.numero_operation = op.numero_operation
-             JOIN produit p ON op.id_produit = p.id_produit
-             JOIN entree e ON o.numero_operation = e.id_entree
-             GROUP BY p.id_produit, p.designation
-             ORDER BY total_value DESC"
-        );
-    }
-}

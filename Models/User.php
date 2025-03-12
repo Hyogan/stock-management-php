@@ -34,7 +34,8 @@ class User extends Model{
      */
     public function getByUsername($username) 
     {
-        return $this->db->fetch("SELECT * FROM utilisateur WHERE nom = ?", [$username]);
+      $db = Database::getInstance();
+        return $db->fetch("SELECT * FROM utilisateurs WHERE nom = ?", [$username]);
     }
       /**
      * Récupère un utilisateur par son email
@@ -65,6 +66,7 @@ class User extends Model{
      * Ajoute un nouvel utilisateur
      */
     public static function add($data) {
+      // die('here we are');
       $db = Database::getInstance();
       $query = "INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, statut, date_creation) 
                VALUES (?, ?, ?, ?, ?, ?, NOW())";
@@ -74,11 +76,13 @@ class User extends Model{
           $data['prenom'],
           $data['email'],
           password_hash($data['mot_de_passe'], PASSWORD_DEFAULT),
-          $data['role'],
+          $data['role'] ?? 'secretaire',
           $data['statut'] ?? 'actif'
       ];
       
+      // die('here we are');
       $db->query($query, $params);
+      // die('here we are');
       return $db->getConnection()->lastInsertId();
   }
   
@@ -130,7 +134,8 @@ class User extends Model{
      * Récupérer les utilisateurs par type
      */
     public function getByType($type) {
-        return $this->db->fetchAll("SELECT * FROM utilisateur WHERE type = ? ORDER BY id", [$type]);
+       $db = Database::getInstance();
+        return $db->fetchAll("SELECT * FROM utilisateurs WHERE type = ? ORDER BY id", [$type]);
     }
 
      /**
@@ -198,11 +203,14 @@ class User extends Model{
   /**
    * Récupérer les opérations effectuées par un utilisateur
    */
-  public function getOperations($userId) {
-      return $this->db->fetchAll(
+  public function getOperations($userId) 
+  {
+      $db = Database::getInstance();{    
+      return $db->fetchAll(
           "SELECT * FROM operation WHERE id_utilisateur = ? ORDER BY date DESC",
           [$userId]
       );
+    }
   }
   
   /**
@@ -224,8 +232,10 @@ class User extends Model{
   /**
    * Récupérer les statistiques d'activité d'un utilisateur
    */
-  public function getActivityStats($userId) {
-      return $this->db->fetch(
+  public function getActivityStats($userId) 
+  {
+    $db = Database::getInstance();
+      return $db->fetch(
           "SELECT 
               COUNT(*) as total_operations,
               COUNT(CASE WHEN type = 'entree' THEN 1 END) as total_entries,

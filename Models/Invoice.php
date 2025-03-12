@@ -11,15 +11,11 @@ use PDO;
  */
 class Invoice extends Model
 {
-  public function index(){
-    return $this->view('');
-  }
-  
     protected $table = 'factures';
-    
+
     /**
      * Compte le nombre total de factures
-     * 
+     *
      * @return int Nombre de factures
      */
     public function countAll()
@@ -30,10 +26,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
-    
+
     /**
      * Compte le nombre de factures du mois en cours
-     * 
+     *
      * @return int Nombre de factures du mois
      */
     public function countMonthly()
@@ -47,10 +43,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
-    
+
     /**
      * Compte le nombre de factures impayées
-     * 
+     *
      * @return int Nombre de factures impayées
      */
     public function countUnpaid()
@@ -62,10 +58,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
-    
+
     /**
      * Récupère les factures impayées
-     * 
+     *
      * @param int $limit Nombre maximum de factures à récupérer
      * @return array Liste des factures impayées
      */
@@ -82,10 +78,10 @@ class Invoice extends Model
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+
     /**
      * Compte le nombre de factures par statut
-     * 
+     *
      * @param string $status Statut des factures
      * @return int Nombre de factures
      */
@@ -98,10 +94,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
-    
+
     /**
      * Récupère le montant total des factures par statut
-     * 
+     *
      * @param string $status Statut des factures
      * @return float Montant total
      */
@@ -114,10 +110,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'] ?? 0;
     }
-    
+
     /**
      * Récupère le chiffre d'affaires mensuel
-     * 
+     *
      * @param string $month Mois au format YYYY-MM
      * @return float Montant total des factures du mois
      */
@@ -131,10 +127,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'] ?? 0;
     }
-    
+
     /**
      * Récupère le chiffre d'affaires annuel
-     * 
+     *
      * @param int $year Année
      * @return float Montant total des factures de l'année
      */
@@ -148,10 +144,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'] ?? 0;
     }
-    
+
     /**
      * Compte le nombre de factures par année
-     * 
+     *
      * @param int $year Année
      * @return int Nombre de factures
      */
@@ -165,10 +161,10 @@ class Invoice extends Model
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
-    
+
     /**
      * Récupère les statistiques annuelles
-     * 
+     *
      * @return array Statistiques par année
      */
     public function getYearlyStats()
@@ -179,18 +175,17 @@ class Invoice extends Model
                     SUM(montant_total) as montant_total,
                     SUM(CASE WHEN statut = 'payee' THEN montant_total ELSE 0 END) as montant_paye,
                     AVG(montant_total) as montant_moyen
-                FROM {$this->table}
-                GROUP BY YEAR(date_emission)
+                FROM {$this->table}GROUP BY YEAR(date_emission)
                 ORDER BY annee DESC
                 LIMIT 3";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+
     /**
      * Récupère les statistiques mensuelles pour l'année en cours
-     * 
+     *
      * @return array Statistiques par mois
      */
     public function getMonthlyStats()
@@ -211,10 +206,10 @@ class Invoice extends Model
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+
     /**
      * Récupère les statistiques par client
-     * 
+     *
      * @param int $limit Nombre maximum de clients à récupérer
      * @return array Statistiques par client
      */
@@ -236,10 +231,10 @@ class Invoice extends Model
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+
     /**
      * Met à jour le statut d'une facture
-     * 
+     *
      * @param int $id ID de la facture
      * @param string $status Nouveau statut
      * @return bool Succès de la mise à jour
@@ -252,10 +247,10 @@ class Invoice extends Model
         $stmt->bindParam(':status', $status);
         return $stmt->execute();
     }
-    
+
     /**
      * Calcule le montant restant à payer pour une facture
-     * 
+     *
      * @param int $id ID de la facture
      * @return float Montant restant à payer
      */
@@ -267,22 +262,22 @@ class Invoice extends Model
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $invoice = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$invoice) {
             return 0;
         }
-        
+
         $totalAmount = $invoice['montant_total'];
-        
+
         // Récupérer le montant total des paiements pour cette facture
         $sql = "SELECT SUM(montant) as total_paye FROM paiements WHERE id_facture = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         $payment = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         $paidAmount = $payment['total_paye'] ?? 0;
-        
+
         return $totalAmount - $paidAmount;
     }
 }

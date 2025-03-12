@@ -48,9 +48,11 @@ class AuthController extends Controller{
         $this->redirect('/dashboard');
         exit;
     }
+    
 
     // Vérifier si le formulaire a été soumis
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+     
         $nom = $_POST['nom'] ?? '';
         $prenom = $_POST['prenom'] ?? '';
         $email = $_POST['email'] ?? '';
@@ -82,7 +84,7 @@ class AuthController extends Controller{
         if (User::emailExists($email)) {
             $errors['email'] = 'Cet email est déjà utilisé';
         }
-
+        
         // Si des erreurs sont présentes, afficher le formulaire avec les erreurs
         if (!empty($errors)) {
             $this->view('auth/register', [
@@ -95,13 +97,14 @@ class AuthController extends Controller{
             return;
         }
 
+       
         // Ajouter l'utilisateur à la base de données
         $userId = User::add([
             'nom' => $nom,
             'prenom' => $prenom,
             'email' => $email,
             'mot_de_passe' => $password, // Le mot de passe sera hashé dans le modèle
-            'role' => $role,
+            'role' => 'secretaire',
             'statut' => $statut
         ]);
 
@@ -180,6 +183,7 @@ class AuthController extends Controller{
       $_SESSION['user_id'] = $user['id'];
       $_SESSION['user_name'] = $user['prenom'] . ' ' . $user['nom'];
       $_SESSION['user_email'] = $user['email'];
+      $_SESSION['user_role'] = $user['role'];
       $_SESSION['logged_in'] = $user['role'];
       // die($user);
 

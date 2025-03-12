@@ -1,231 +1,229 @@
 <?php
 /**
- * Modèle Opération (classe parent pour Entrée et Sortie)
+ * Modèle Opération
  */
 namespace App\Models;
 use App\Utils\Database;
+
 class Operation {
     protected $db;
-    protected $table = 'operation';
-    
+    protected static $table = 'operations_stock';
+
     public function __construct() {
         $this->db = Database::getInstance();
     }
-    
+
     /**
      * Récupérer toutes les opérations
      */
-    public static function getAll() 
-    {
-      $db = Database::getInstance();
-        return $db->fetchAll("SELECT * FROM operation ORDER BY date DESC");
+    public static function getAll() {
+        $db = Database::getInstance();
+        return $db->fetchAll("SELECT * FROM operations_stock ORDER BY date_operation DESC");
     }
-    
+
     /**
-     * Récupérer une opération par son numéro
+     * Récupérer une opération par son ID
      */
-    public function getById($id) {
-        return $this->db->fetch("SELECT * FROM operation WHERE numero_operation = ?", [$id]);
+    public static function getById($id) {
+        $db = Database::getInstance();
+        return $db->fetch("SELECT * FROM operations_stock WHERE id = ?", [$id]);
     }
-    
+
     /**
      * Créer une nouvelle opération
      */
-    public function create($data) {
-        // Ajouter la date si elle n'est pas spécifiée
-        if (!isset($data['date'])) {
-            $data['date'] = date('Y-m-d H:i:s');
+    public static function create($data) {
+        $db = Database::getInstance();
+        if (!isset($data['date_operation'])) {
+            $data['date_operation'] = date('Y-m-d H:i:s');
         }
-        
-        return $this->db->insert('operation', $data);
+        return $db->insert('operations_stock', $data);
     }
-    
+
     /**
      * Mettre à jour une opération
      */
-    public function update($id, $data) {
-        return $this->db->update('operation', $data, 'numero_operation = ?', [$id]);
+    public static function update($id, $data) {
+        $db = Database::getInstance();
+        return $db->update('operations_stock', $data, 'id = ?', [$id]);
     }
-    
+
     /**
      * Supprimer une opération
      */
-    public function delete($id) {
-        // Supprimer d'abord les relations avec les produits
-        $this->db->delete('operation_produit', 'numero_operation = ?', [$id]);
-        
-        // Puis supprimer l'opération
-        return $this->db->delete('operation', 'numero_operation = ?', [$id]);
+    public static function delete($id) {
+        $db = Database::getInstance();
+        return $db->delete('operations_stock', 'id = ?', [$id]);
     }
-    
+
     /**
      * Ajouter un produit à une opération
      */
-    public function addProduct($operationId, $productId, $quantity, $price) {
-        return $this->db->insert('operation_produit', [
-            'numero_operation' => $operationId,
+    public static function addProduct($operationId, $productId, $quantity, $price) {
+        $db = Database::getInstance();
+        return $db->insert('details_commande', [ // ou details_entree_stock ou details_sortie_stock
+            'id_commande' => $operationId, // ou id_entree ou id_sortie
             'id_produit' => $productId,
             'quantite' => $quantity,
-            'prix_unitaire' => $price
+            'prix_unitaire' => $price,
+            'montant_total' => $quantity * $price,
         ]);
     }
 
     /**
- * Récupérer l'utilisateur associé à l'opération
- */
-  public function getUser($operationId) 
-  {
-    return $this->db->fetch(
-        "SELECT u.* 
-        FROM utilisateur u
-        JOIN operation o ON u.id_utilisateur = o.id_utilisateur
-        WHERE o.id_operation = ?",
-        [$operationId]
-    );
-  }
-    
-    /**
-     * Récupérer les produits d'une opération
+     * Récupérer l'utilisateur associé à l'opération
      */
-    public function getProducts($operationId) {
-        return $this->db->fetchAll(
-            "SELECT op.*, p.designation, p.prix_vente, p.prix_achat 
-             FROM operation_produit op
-             JOIN produit p ON op.id_produit = p.id_produit
-             WHERE op.numero_operation = ?",
+    public static function getUser($operationId) {
+        $db = Database::getInstance();
+        return $db->fetch(
+            "SELECT u.* FROM utilisateurs u
+             JOIN operations_stock o ON u.id = o.id_utilisateur
+             WHERE o.id = ?",
             [$operationId]
         );
     }
 
     /**
- * Filtrer les opérations selon des critères
- */
-/**
- * Filtrer les opérations selon des critères
- */
-  public function filter($criteria = [], $startDate = null, $endDate = null, $type = null)
-  {
-    $sql = "SELECT * FROM " . $this->table;
-    $params = [];
-    $conditions = [];
-    
-    // Construire la clause WHERE si des critères sont fournis
-    if (!empty($criteria)) {
-        foreach ($criteria as $key => $value) {
-            if ($value !== null) {
-                $conditions[] = "$key = ?";
-                $params[] = $value;
+     * Récupérer les produits d'une opération
+     */
+    public static function getProducts($operationId) {
+        $db = Database::getInstance();
+        return $db->fetchAll(
+            "SELECT dc.*, p.designation, p.prix_vente, p.prix_achat 
+             FROM details_commande dc
+             JOIN produits p ON dc.id_produit = p.id
+             WHERE dc.id_commande = ?", // ou id_entree ou id_sortie
+            [$operationId]
+        );
+    }
+
+    /**
+     * Filtrer les opérations selon des critères
+     */
+    public static function filter($criteria = [], $startDate = null, $endDate = null, $type = null) {
+        $db = Database::getInstance();
+        $sql = "SELECT * FROM operations_stock";
+        $params = [];
+        $conditions = [];
+
+        if (!empty($criteria)) {
+            foreach ($criteria as $key => $value) {
+                if ($value !== null) {
+                    $conditions[] = "$key = ?";
+                    $params[] = $value;
+                }
             }
         }
+
+        if ($startDate && $endDate) {
+            $conditions[] = "date_operation BETWEEN ? AND ?";
+            $params[] = $startDate;
+            $params[] = $endDate;
+        }
+
+        if ($type !== null) {
+            $conditions[] = "type_operation = ?";
+            $params[] = $type;
+        }
+
+        if (!empty($conditions)) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
+        }
+
+        $sql .= " ORDER BY date_operation DESC";
+
+        return $db->fetchAll($sql, $params);
     }
-    
-    // Ajouter la condition de date si fournie
-    if ($startDate && $endDate) {
-        $conditions[] = "date_operation BETWEEN ? AND ?";
-        $params[] = $startDate;
-        $params[] = $endDate;
-    }
-    
-    // Ajouter la condition de type si fournie
-    if ($type !== null) {
-        $conditions[] = "type = ?";
-        $params[] = $type;
-    }
-    
-    // Ajouter les conditions à la requête
-    if (!empty($conditions)) {
-        $sql .= " WHERE " . implode(' AND ', $conditions);
-    }
-    
-    $sql .= " ORDER BY date_operation DESC";
-    
-    return $this->db->fetchAll($sql, $params);
-  }
-    
+
     /**
      * Calculer le total d'une opération
      */
-    public function calculateTotal($operationId) {
-        $result = $this->db->fetch(
+    public static function calculateTotal($operationId) {
+        $db = Database::getInstance();
+        $result = $db->fetch(
             "SELECT SUM(quantite * prix_unitaire) as total 
-             FROM operation_produit 
-             WHERE numero_operation = ?",
+             FROM details_commande 
+             WHERE id_commande = ?", // ou id_entree ou id_sortie
             [$operationId]
         );
-        
+
         return $result['total'] ?? 0;
     }
-    
+
     /**
      * Mettre à jour le total d'une opération
      */
-    public function updateTotal($operationId) {
-        $total = $this->calculateTotal($operationId);
-        
-        return $this->db->update(
-            'operation',
-            ['prix' => $total],
-            'numero_operation = ?',
+    public static function updateTotal($operationId) {
+        $db = Database::getInstance();
+        $total = self::calculateTotal($operationId);
+
+        return $db->update(
+            'commandes', // ou entrees_stock ou sorties_stock
+            ['montant_total' => $total],
+            'id = ?', // ou id
             [$operationId]
         );
     }
-    
+
     /**
      * Récupérer les opérations par type
      */
-    public function getByType($type) {
-        return $this->db->fetchAll(
-            "SELECT * FROM operation WHERE type = ? ORDER BY date DESC",
+    public static function getByType($type) {
+        $db = Database::getInstance();
+        return $db->fetchAll(
+            "SELECT * FROM operations_stock WHERE type_operation = ? ORDER BY date_operation DESC",
             [$type]
         );
     }
-    
+
     /**
      * Récupérer les opérations par période
      */
-    public function getByPeriod($startDate, $endDate, $type = null) {
-        $sql = "SELECT * FROM operation WHERE date BETWEEN ? AND ?";
+    public static function getByPeriod($startDate, $endDate, $type = null) {
+        $db = Database::getInstance();
+        $sql = "SELECT * FROM operations_stock WHERE date_operation BETWEEN ? AND ?";
         $params = [$startDate, $endDate];
-        
+
         if ($type !== null) {
-            $sql .= " AND type = ?";
+            $sql .= " AND type_operation = ?";
             $params[] = $type;
         }
-        
-        $sql .= " ORDER BY date DESC";
-        
-        return $this->db->fetchAll($sql, $params);
+
+        $sql .= " ORDER BY date_operation DESC";
+
+        return $db->fetchAll($sql, $params);
     }
-    
+
     /**
      * Récupérer les statistiques des opérations
      */
-    public function getStats($period = 'month') {
+    public static function getStats($period = 'month') {
+        $db = Database::getInstance();
         $sql = "";
-        
+
         switch ($period) {
             case 'day':
-                $sql = "SELECT DATE(date) as period, COUNT(*) as count, SUM(prix) as total, type 
-                       FROM operation 
-                       WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) 
-                       GROUP BY DATE(date), type 
-                       ORDER BY DATE(date)";
+                $sql = "SELECT DATE(date_operation) as period, COUNT(*) as count, type_operation 
+                       FROM operations_stock 
+                       WHERE date_operation >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)  GROUP BY DATE(date_operation), type_operation 
+                       ORDER BY DATE(date_operation)";
                 break;
             case 'month':
-                $sql = "SELECT DATE_FORMAT(date, '%Y-%m') as period, COUNT(*) as count, SUM(prix) as total, type 
-                       FROM operation 
-                       WHERE date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
-                       GROUP BY DATE_FORMAT(date, '%Y-%m'), type 
+                $sql = "SELECT DATE_FORMAT(date_operation, '%Y-%m') as period, COUNT(*) as count, type_operation 
+                       FROM operations_stock 
+                       WHERE date_operation >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH) 
+                       GROUP BY DATE_FORMAT(date_operation, '%Y-%m'), type_operation 
                        ORDER BY period";
                 break;
             case 'year':
-                $sql = "SELECT YEAR(date) as period, COUNT(*) as count, SUM(prix) as total, type 
-                       FROM operation 
-                       GROUP BY YEAR(date), type 
+                $sql = "SELECT YEAR(date_operation) as period, COUNT(*) as count, type_operation 
+                       FROM operations_stock 
+                       GROUP BY YEAR(date_operation), type_operation 
                        ORDER BY period";
                 break;
         }
-        
-        return $this->db->fetchAll($sql);
+
+        return $db->fetchAll($sql);
     }
 }
+

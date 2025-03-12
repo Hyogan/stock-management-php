@@ -120,4 +120,3 @@ class Supplier extends Model {
         ", [$status, $id]);
     }
 }
-
