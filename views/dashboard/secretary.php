@@ -1,9 +1,8 @@
 <?php
 $pageTitle = 'Tableau de bord Secrétaire';
-ob_start();
 ?>
 
-<div class="container-fluid">
+<div class="">
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Tableau de bord Secrétaire</h1>
@@ -206,8 +205,3 @@ ob_start();
         </div>
     </div>
 </div>
-
-<?php
-$content = ob_get_clean();
-include BASE_PATH . '/views/layouts/main.php';
-?>

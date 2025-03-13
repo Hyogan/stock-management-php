@@ -64,7 +64,7 @@ class DashboardController extends Controller
             'orders' => $orders,
             'deliveries' => $deliveries,
             // ... pass other data
-        ]);
+        ],'admin');
     }
 
     private function storekeeperDashboard()

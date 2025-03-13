@@ -9,7 +9,8 @@ class ProductController extends Controller{
     /**
      * Afficher la liste des produits
      */
-    public function index() {
+    public function index()
+     {
       // Vérifier si l'utilisateur est connecté
       if (!isset($_SESSION['user_id'])) {
           $this->redirect('/login');

@@ -1,4 +1,4 @@
-<nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+<nav id="sidebarMenu" style="height: 100%; height: 100vh;" class="sticky col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
     <div class="position-sticky pt-3">
         <ul class="nav flex-column">
             <li class="nav-item">
@@ -11,7 +11,7 @@
             <li class="nav-item">
                 <a class="nav-link <?= $currentPage === 'products' ? 'active' : '' ?>" href="<?= APP_URL ?>/products">
                     <i class="fas fa-box me-2"></i>
-                    Produits
+               `     Produits
                 </a>
             </li>
             
@@ -109,5 +109,3 @@
         <?php endif; ?>
     </div>
 </nav>
-
-<?php require_once "./sidebar2.php";

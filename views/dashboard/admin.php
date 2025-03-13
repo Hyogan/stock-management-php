@@ -225,5 +225,5 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-include BASE_PATH . '/views/layouts/main.php';
+include BASE_PATH . '/views/layouts/admin.php';
 ?>
