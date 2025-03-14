@@ -41,14 +41,21 @@ class DashboardController extends Controller
     {
         // Fetch data for the director's dashboard
         $products = Product::getAll(); // Example: Fetch all products
-        $orders = Order::where('statut', 'en_attente'); // Example: Fetch pending orders
+        $orders = Order::where('statut', 'pending'); // Example: Fetch pending orders
         $users = User::getAll();
+        $stats = [
+          'users' => count($users),
+          'orders' => count(Order::getAll()),
+          'products' => count($products),
+          'pending_orders' => count($orders)
 
+        ];
         // Load the admin dashboard view
         $this->view('dashboard/admin', [
             'products' => $products,
             'orders' => $orders,
             'users' => $users,
+            'stats' => $stats
         ]);
     }
 
@@ -81,6 +88,6 @@ class DashboardController extends Controller
             'entries' => $entries,
             'exits' => $exits,
             'orders' => $orders,
-        ]);
+        ],'admin');
     }
 }

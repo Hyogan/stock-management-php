@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Core\Controller;
+use App\Models\Category;
+
+class CategoryController extends Controller{
+
+    // Vérifie si l'utilisateur est connecté
+    private function checkAuth() {
+        if (!isset($_SESSION['user_id'])) {
+            $this->redirect('/login');
+            exit;
+        }
+    }
+
+    // Affiche la liste des catégories avec filtrage et tri
+    public function index() {
+        $this->checkAuth(); // Vérifier l'authentification
+
+        // Récupérer les paramètres de recherche et de tri
+        $search = $_GET['search'] ?? '';
+        $sort = $_GET['sort'] ?? 'name';
+        $order = $_GET['order'] ?? 'asc';
+        $categories = [];
+        // Récupérer les catégories avec filtre et tri
+        if (!empty($search)) {
+            // $categories = Category::search($search);
+            $categories = Category::getAll();
+        } else {
+            // $categories = Category::getAll($sort, $order);
+            $categories = Category::getAll();
+        }
+
+        // Définir le titre de la page
+        $pageTitle = 'Gestion des catégories';
+
+        // Afficher la vue
+        $this->view('category/index', [
+            'pageTitle' => $pageTitle,
+            'categories' => $categories,
+            'search' => $search,
+            'sort' => $sort,
+            'order' => $order
+        ], 'admin');
+    }
+
+    // Affiche une seule catégorie
+    public function show($id) {
+        $this->checkAuth();
+        $category = Category::find($id);
+
+        if (!$category) {
+            $_SESSION['error'] = "Catégorie non trouvée.";
+            $this->redirect('/categories');
+        }
+
+        $this->view('category/show', ['category' => $category]);
+    }
+
+    // Affiche le formulaire de création
+    public function create() {
+        $this->checkAuth();
+        $this->view('category/create',[],'admin');
+    }
+
+    // Enregistre une nouvelle catégorie
+    public function store() {
+        $this->checkAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name = trim(htmlspecialchars($_POST['name'] ?? ''));
+
+            if (empty($name)) {
+                $_SESSION['error'] = "Le nom de la catégorie est requis.";
+                $this->redirect('/categories/create');
+            }
+            $data = [
+              'nom' => $_POST['nom'] ?? '',
+              'description' => $_POST['description'] ?? '',
+              'statut' => $_POST['statut'] ?? 'actif',
+              'date_creation' => date_create('now')
+            ];
+            Category::create($data);
+
+            $_SESSION['success'] = "Catégorie ajoutée avec succès.";
+            $this->redirect('/categories');
+        }
+    }
+
+    // Affiche le formulaire d'édition
+    public function edit($id) {
+        $this->checkAuth();
+        $category = Category::find($id);
+
+        if (!$category) {
+            $_SESSION['error'] = "Catégorie non trouvée.";
+            $this->redirect('/categories');
+        }
+
+        $this->view('category/edit', ['category' => $category]);
+    }
+
+    // Met à jour une catégorie
+    public function update($id) {
+        $this->checkAuth();
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $name = trim(htmlspecialchars($_POST['name'] ?? ''));
+
+            if (empty($name)) {
+                $_SESSION['error'] = "Le nom de la catégorie est requis.";
+                $this->redirect("/categories/$id/edit");
+            }
+
+            $category = Category::find($id);
+            if (!$category) {
+                $_SESSION['error'] = "Catégorie non trouvée.";
+                $this->redirect('/categories');
+            }
+
+            $category->setName($name);
+            $category->update();
+
+            $_SESSION['success'] = "Catégorie mise à jour avec succès.";
+            $this->redirect('/categories');
+        }
+    }
+
+    // Supprime une catégorie
+    public function delete($id) {
+        $this->checkAuth();
+        $category = Category::find($id);
+
+        if (!$category) {
+            $_SESSION['error'] = "Catégorie non trouvée.";
+            $this->redirect('/categories');
+        }
+
+        $category->delete();
+        $_SESSION['success'] = "Catégorie supprimée avec succès.";
+        $this->redirect('/categories');
+    }
+
+}

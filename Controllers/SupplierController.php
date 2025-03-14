@@ -1,12 +1,13 @@
 <?php
 namespace App\Controllers;
 
+use App\Core\Controller;
 use App\Models\Supplier;
 use App\Models\Product;
 use App\Utils\Session;
 use App\Utils\Validator;
 
-class SupplierController {
+class SupplierController extends Controller{
     
     /**
      * Affiche la liste des fournisseurs
@@ -15,13 +16,11 @@ class SupplierController {
         $suppliers = Supplier::getAll();
         
         // Rendu de la vue avec les données
-        return [
-            'view' => 'suppliers/index',
-            'data' => [
-                'suppliers' => $suppliers,
-                'title' => 'Gestion des fournisseurs'
-            ]
-        ];
+        $this->view('suppliers/index',
+        [
+          'suppliers' => $suppliers,
+          'title' => 'Gestion des fournisseurs'
+        ],'admin');
     }
     
     /**

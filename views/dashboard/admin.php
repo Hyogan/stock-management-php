@@ -22,7 +22,7 @@ ob_start();
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Produits</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['total_products'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['products'] ?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-box fa-2x text-gray-300"></i>
@@ -40,7 +40,7 @@ ob_start();
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Total Commandes</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['total_orders'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['orders'] ?? 0  ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
@@ -76,7 +76,7 @@ ob_start();
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Total Utilisateurs</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['total_users'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['users'] ?? 0   ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-users fa-2x text-gray-300"></i>

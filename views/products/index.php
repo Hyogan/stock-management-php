@@ -330,6 +330,6 @@ $(document).ready(function() {
 </script>
 
 <?php
-$content = ob_get_clean();
-include BASE_PATH . '/views/layouts/main.php';
-?> --> -->
+// $content = ob_get_clean();
+// include BASE_PATH . '/views/layouts/main.php';
+?>

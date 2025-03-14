@@ -279,7 +279,9 @@ ADD CONSTRAINT `entrees_stock_ibfk_3` FOREIGN KEY (`id_livraison`) REFERENCES `l
 ADD CONSTRAINT `sorties_stock_ibfk_4` FOREIGN KEY (`id_client`) REFERENCES `clients` (`id`) ON DELETE SET NULL;
 
 ALTER TABLE users ADD COLUMN derniere_connexion DATETIME NULL;
-
+ALTER TABLE utilisateurs
+ADD COLUMN remember_token VARCHAR(255) NULL,
+ADD COLUMN remember_token_expiry DATETIME NULL;
 
 
 -- Insertion d'un utilisateur administrateur par défaut

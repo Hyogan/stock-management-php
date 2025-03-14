@@ -21,7 +21,7 @@ class AuthController extends Controller{
         }
         $this->view('auth/login', [
           'pageTitle' => 'Connexion'
-      ]);
+      ],'auth');
     }
 
 

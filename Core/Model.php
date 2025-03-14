@@ -17,6 +17,8 @@ class Model {
         return self::$db->fetchAll("SELECT * FROM {$table}");
     }
 
+  
+
     /**
      * Trouver un enregistrement par son ID
      */

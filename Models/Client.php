@@ -18,6 +18,11 @@ class Client extends Model {
         return $db->fetchAll("SELECT * FROM clients ORDER BY nom, prenom");
     }
 
+    public static function getByStatus($status) {
+      $db = Database::getInstance();
+        return $db->fetchAll("SELECT * FROM clients ORDER BY nom, prenom WHERE status=$status");
+    }
+
     /**
      * Récupérer un client par son ID
      */
@@ -269,5 +274,7 @@ class Client extends Model {
 
       return $db->fetchAll($sql, $params);
   }
+
+
 }
 

@@ -49,7 +49,7 @@ class ProductController extends Controller{
           'category' => $category,
           'sort' => $sort,
           'order' => $order
-      ]);
+      ],'admin');
   }
     
     /**

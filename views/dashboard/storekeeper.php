@@ -1,6 +1,5 @@
 <?php
 $pageTitle = 'Tableau de bord Magasinier';
-ob_start();
 ?>
 
 <div class="container-fluid">
@@ -238,8 +237,3 @@ ob_start();
         </div>
     </div>
 </div>
-
-<?php
-$content = ob_get_clean();
-include BASE_PATH . '/views/layouts/main.php';
-?>

@@ -3,12 +3,11 @@
  * Contrôleur des Clients
  * Gère toutes les opérations liées aux clients
  */
-namespace Controllers;
+namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Order;
-use AuthController;
-use Client;
+use App\Models\Client;
+use App\Controllers\AuthController;
 
 class ClientController extends Controller {
     private $clientModel;
@@ -16,7 +15,7 @@ class ClientController extends Controller {
     
     public function __construct() {
         // $this->clientModel = new Client();
-        // $this->authController = new AuthController();
+        $this->authController = new AuthController();
     }
     
     /**
@@ -35,12 +34,13 @@ class ClientController extends Controller {
                 <i class="bi bi-plus"></i> Ajouter un client
             </a>
         ';
+        // var_dump($clients);
         // Afficher la vue
         $this->view('clients/index', [
             'clients' => $clients,
             'pageTitle' => $pageTitle,
             'actionButtons' => $actionButtons
-        ]);
+        ], 'admin');
        }
     /**
      * Afficher le formulaire d'ajout de client
@@ -295,11 +295,12 @@ class ClientController extends Controller {
                 <i class="bi bi-plus"></i> Ajouter un client
             </a>
         ';
-        
-        // Afficher la vue
-        require_once BASE_PATH . '/views/layouts/header.php';
-        require_once BASE_PATH . '/views/clients/index.php';
-        require_once BASE_PATH . '/views/layouts/footer.php';
+
+        $this->view('clients/index', [
+          'clients' => $clients,
+          'pageTitle' => $pageTitle,
+          'actionButtons' => $actionButtons
+      ]);
     }
     
     /**
