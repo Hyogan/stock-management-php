@@ -9,6 +9,7 @@ use App\Models\Delivery;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\ExitOp;
+use App\Models\Operation;
 
 class DashboardController extends Controller
 {
@@ -83,8 +84,12 @@ class DashboardController extends Controller
         $orders = Order::where('statut', 'en_attente');
 
         // Load the storekeeper dashboard view
+        // var_dump($products);
         $this->view('dashboard/storekeeper', [
             'products' => $products,
+            'outOfStock' => Product::getOutOfStock(),
+            'lowStockProducts' => Product::getLowStock(),
+            'operations' => Operation::getAll(5),
             'entries' => $entries,
             'exits' => $exits,
             'orders' => $orders,

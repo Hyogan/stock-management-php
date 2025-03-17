@@ -250,38 +250,6 @@ class AuthController extends Controller{
     public function hasRole($role) {
       return isset($_SESSION['user_role']) && $_SESSION['user_role'] === $role;
   }
-    /**
-     * Vérifier si l'utilisateur est administrateur
-     */
-    public function isAdmin() {
-        if (!$this->isLoggedIn()) {
-            return false;
-        }
-        
-        return $_SESSION['user_type'] === 'directeur';
-    }
-    
-    /**
-     * Vérifier si l'utilisateur est magasinier
-     */
-    public function isStorekeeper() {
-        if (!$this->isLoggedIn()) {
-            return false;
-        }
-        
-        return $_SESSION['user_type'] === 'storekeeper';
-    }
-    
-    /**
-     * Vérifier si l'utilisateur est secrétaire
-     */
-    public function isSecretary() {
-        if (!$this->isLoggedIn()) {
-            return false;
-        }
-        
-        return $_SESSION['user_type'] === 'secretary';
-    }
     
     /**
      * Rediriger vers le tableau de bord approprié
@@ -292,18 +260,21 @@ class AuthController extends Controller{
             exit;
         }
         
-        if ($this->isAdmin()) {
+        if (Auth::isAdmin()) {
             header('Location: ' . APP_URL . '/dashboard/admin');
-        } elseif ($this->isStorekeeper()) {
+        } elseif (Auth::isStorekeeper()) {
             header('Location: ' . APP_URL . '/dashboard/storekeeper');
-        } elseif ($this->isSecretary()) {
+        } elseif (Auth::isSecretary()) {
             header('Location: ' . APP_URL . '/dashboard/secretary');
         } else {
             header('Location: ' . APP_URL);
         }
-        
         exit;
     }
+
+    public function isAdmin(){return Auth::isAdmin();}
+    public function isStoreKeeper(){return Auth::isStorekeeper();}
+    public function isSecretary(){return Auth::isSecretary();}
     
     /**
      * Vérifier si l'utilisateur a les droits d'accès
@@ -313,18 +284,17 @@ class AuthController extends Controller{
             header('Location: ' . APP_URL . '/auth/login');
             exit;
         }
-        
         $hasAccess = false;
         
         switch ($requiredRole) {
             case 'admin':
-                $hasAccess = $this->isAdmin();
+                $hasAccess = Auth::isAdmin();
                 break;
             case 'storekeeper':
-                $hasAccess = $this->isStorekeeper();
+                $hasAccess = Auth::isStorekeeper();
                 break;
             case 'secretary':
-                $hasAccess = $this->isSecretary();
+                $hasAccess = Auth::isSecretary();
                 break;
             case 'any':
                 $hasAccess = true;

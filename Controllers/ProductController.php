@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Product;
+use App\Utils\Auth;
 use App\Models\Category;
 use App\Models\Supplier;
 class ProductController extends Controller{
@@ -33,23 +34,23 @@ class ProductController extends Controller{
       } else {
           $products = Product::getAllSorted($sort, $order);
       }
-      
       // Récupérer les catégories pour le filtre
       $categories = Category::getAll();
-      
       // Définir le titre de la page
       $pageTitle = 'Gestion des produits';
-      
-      // Afficher la vue
-      $this->view('products/index', [
-          'pageTitle' => $pageTitle,
-          'products' => $products,
-          'categories' => $categories,
-          'search' => $search,
-          'category' => $category,
-          'sort' => $sort,
-          'order' => $order
-      ],'admin');
+    $authController = new AuthController();
+      $data = [
+        'pageTitle' => $pageTitle,
+        'products' => $products,
+        'categories' => $categories,
+        'search' => $search,
+        'category' => $category,
+        'sort' => $sort,
+        'order' => $order,
+        'authController' => $authController
+      ];
+      // var_dump($data['products']);
+      $this->view('products/index', $data,'admin');
   }
     
     /**
@@ -60,20 +61,16 @@ class ProductController extends Controller{
        if (!isset($_SESSION['user_id'])) {
            $this->redirect('/login');
            exit;
-       }
-       
+       }   
        // Vérifier les permissions
-       if (!isAdmin() && !isStorekeeper()) {
+       if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
            $this->redirect('/products');
            exit;
        }
-       
        // Récupérer les catégories
        $categories = Category::getAll();
-       
        // Récupérer les fournisseurs
        $suppliers = Supplier::getAll();
-       
        // Définir le titre de la page
        $pageTitle = 'Ajouter un produit';
        
@@ -82,7 +79,7 @@ class ProductController extends Controller{
            'pageTitle' => $pageTitle,
            'categories' => $categories,
            'suppliers' => $suppliers
-       ]);
+       ],'admin');
    }
     /**
      * Enregistre un nouveau produit
@@ -95,7 +92,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin() && !isStorekeeper()) {
+      if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
           $this->redirect('/products');
           exit;
       }
@@ -188,7 +185,6 @@ class ProductController extends Controller{
       
       // Enregistrer le produit
       $productId = Product::add($data);
-      
       // Ajouter un mouvement de stock initial si la quantité est > 0
       if ($data['quantite_stock'] > 0) {
           Product::addStockMovement($productId, $data['quantite_stock'], 'entree', 'Stock initial', $_SESSION['user_id']);
@@ -259,7 +255,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin() && !isStorekeeper()) {
+      if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
           $this->redirect('/products');
           exit;
       }
@@ -313,7 +309,7 @@ class ProductController extends Controller{
         }
         
         // Vérifier les permissions
-        if (!isAdmin() && !isStorekeeper()) {
+        if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
             $this->redirect('/products');
             exit;
         }
@@ -415,8 +411,8 @@ class ProductController extends Controller{
       // Supprimer l'ancienne image si elle existe
       if (!empty($product['image']) && file_exists(BASE_PATH . '/public' . $product['image'])) {
           unlink(BASE_PATH . '/public' . $product['image']);
-      }
-      
+      }      // Rediriger vers la liste des produits avec un message de succès
+      flash('success', 'Le produit a été ajouté avec succès');
       $data['image'] = '/uploads/products/' . $fileName;
   }
 }
@@ -442,7 +438,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin()) {
+      if (!Auth::isAdmin()) {
           $this->redirect('/products');
           exit;
       }
@@ -497,7 +493,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin() && !isStorekeeper()) {
+      if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
           $this->redirect('/products');
           exit;
       }
@@ -543,7 +539,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin() && !isStorekeeper()) {
+      if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
           $this->redirect('/products');
           exit;
       }
@@ -604,7 +600,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin() && !isStorekeeper()) {
+      if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
           $this->redirect('/products');
           exit;
       }
@@ -651,7 +647,7 @@ class ProductController extends Controller{
       }
       
       // Vérifier les permissions
-      if (!isAdmin() && !isStorekeeper()) {
+      if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
           $this->redirect('/products');
           exit;
       }
@@ -735,6 +731,7 @@ class ProductController extends Controller{
           'movements' => $movements
       ]);
     }
+
     
 /**
 * Exporter la liste des produits au format CSV
@@ -742,7 +739,7 @@ class ProductController extends Controller{
 public function export() {
  // Vérifier les droits d'accès
  $authController = new AuthController();
- if (!$authController->isAdmin() && !$authController->isStorekeeper()) {
+ if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
      $authController->checkAccess('admin');
  }
  
@@ -784,7 +781,7 @@ public function export() {
 */
 public function report() {
   // Vérifier les droits d'accès
-  if (!isAdmin()) {
+  if (!Auth::isAdmin()) {
       // checkAccess('admin');
   }
  
@@ -954,7 +951,7 @@ public function generateStockReport() {
 */
 public function search() {
   // Vérifier les droits d'accès
-  if(!isAdmin())  {
+  if(!Auth::isAdmin())  {
     return ;
   }
   // Récupérer le terme de recherche

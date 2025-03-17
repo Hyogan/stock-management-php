@@ -70,9 +70,9 @@ class CategoryController extends Controller{
         $this->checkAuth();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $name = trim(htmlspecialchars($_POST['name'] ?? ''));
+            $nom = trim(htmlspecialchars($_POST['nom'] ?? ''));
 
-            if (empty($name)) {
+            if (empty($nom)) {
                 $_SESSION['error'] = "Le nom de la catégorie est requis.";
                 $this->redirect('/categories/create');
             }
@@ -82,6 +82,7 @@ class CategoryController extends Controller{
               'statut' => $_POST['statut'] ?? 'actif',
               'date_creation' => date_create('now')
             ];
+            // dd($data);
             Category::create($data);
 
             $_SESSION['success'] = "Catégorie ajoutée avec succès.";

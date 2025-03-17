@@ -26,7 +26,7 @@ $pageTitle = 'Tableau de bord Magasinier';
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Produits</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['total_products'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= count($products) ?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-box fa-2x text-gray-300"></i>
@@ -44,7 +44,7 @@ $pageTitle = 'Tableau de bord Magasinier';
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                 Produits en rupture</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['out_of_stock'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= count($outOfStock)?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
@@ -80,7 +80,7 @@ $pageTitle = 'Tableau de bord Magasinier';
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Entrées en stock</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['entries'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= count($entries)?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-sign-in-alt fa-2x text-gray-300"></i>
@@ -118,9 +118,9 @@ $pageTitle = 'Tableau de bord Magasinier';
                                         <td><?= $product['reference'] ?></td>
                                         <td><?= htmlspecialchars($product['designation']) ?></td>
                                         <td>
-                                            <span class="font-weight-bold text-danger"><?= $product['stock_actuel'] ?></span>
+                                            <span class="font-weight-bold text-danger"><?= $product['quantite_stock'] ?></span>
                                         </td>
-                                        <td><?= $product['stock_minimum'] ?></td>
+                                        <td><?= $product['quantite_alerte'] ?></td>
                                         <td>
                                             <a href="/products/view/<?= $product['id'] ?>" class="btn btn-info btn-sm">
                                                 <i class="fas fa-eye"></i>

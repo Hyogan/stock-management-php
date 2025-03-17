@@ -15,15 +15,19 @@ class Entry extends Operation {
     /**
      * Récupérer toutes les entrées
      */
-    public static function getAll() {
-        $db = Database::getInstance();
-        return $db->fetchAll(
-            "SELECT e.*, u.nom as nom_utilisateur 
-             FROM entrees_stock e
-             LEFT JOIN utilisateurs u ON e.id_utilisateur = u.id
-             ORDER BY e.date_entree DESC"
-        );
-    }
+    public static function getAll($limit = null) {
+      $db = Database::getInstance();
+      $sql = "SELECT e.*, u.nom AS nom_utilisateur 
+              FROM entrees_stock e
+              LEFT JOIN utilisateurs u ON e.id_utilisateur = u.id
+              ORDER BY e.date_entree DESC";
+        if ($limit !== null) {
+            $sql .= " LIMIT ?";
+            return $db->fetchAll($sql, [$limit]); // Pass limit as a bound parameter
+        }
+        return $db->fetchAll($sql);
+  }
+  
 
     /**
      * Récupérer une entrée par son ID

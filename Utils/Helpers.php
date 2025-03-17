@@ -41,6 +41,18 @@ function verifyCsrfToken($token) {
 /**
  * Afficher un message flash
  */
+function flash($key, $message = null) {
+  if ($message) {
+      // Set flash message
+      $_SESSION['flash'][$key] = $message;
+  } elseif (isset($_SESSION['flash'][$key])) {
+      // Retrieve and delete flash message (so it only appears once)
+      $msg = $_SESSION['flash'][$key];
+      unset($_SESSION['flash'][$key]);
+      return $msg;
+  }
+  return null;
+}
 function setFlashMessage($type, $message) {
     $_SESSION['flash'] = [
         'type' => $type,

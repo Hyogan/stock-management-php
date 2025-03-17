@@ -10,10 +10,11 @@
 define('BASE_PATH', __DIR__);
 
 // Charger l'autoloader
-require_once BASE_PATH . '/autoload.php';
+// require_once BASE_PATH . '/autoload.php';
 
 // Charger les configurations
 require_once BASE_PATH . '/config/config.php';
+require_once BASE_PATH . '/Utils/Helpers.php';
 
 // Initialiser la session
 session_start();
@@ -55,10 +56,10 @@ define('PAYMENT_STATUS_COMPLETE', 'complet');
 define('PAYMENT_STATUS_REFUNDED', 'rembourse');
 
 // Fonctions utilitaires globales
-function redirect($url) {
-    header("Location: " . $url);
-    exit;
-}
+// function redirect($url) {
+//     header("Location: " . $url);
+//     exit;
+// }
 
 function asset($path) {
     return APP_URL . '/assets/' . $path;
@@ -97,15 +98,15 @@ function check_csrf() {
     }
 }
 
-function flash($key, $message = null) {
-    if ($message) {
-        $_SESSION['flash'][$key] = $message;
-    } else {
-        $message = $_SESSION['flash'][$key] ?? null;
-        unset($_SESSION['flash'][$key]);
-        return $message;
-    }
-}
+// function flash($key, $message = null) {
+//     if ($message) {
+//         $_SESSION['flash'][$key] = $message;
+//     } else {
+//         $message = $_SESSION['flash'][$key] ?? null;
+//         unset($_SESSION['flash'][$key]);
+//         return $message;
+//     }
+// }
 
 function formatMoney($amount) {
     return number_format($amount, 2, ',', ' ') . ' DH';

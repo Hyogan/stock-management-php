@@ -9,12 +9,12 @@
     <form method="POST" action="/categories/store">
         <div class="mb-3">
             <label for="name" class="form-label">Nom de la catégorie :</label>
-            <input type="text" class="form-control" id="name" name="name" required>
+            <input type="text" class="form-control" id="nom" name="nom" required>
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Description de la catégorie :</label>
-            <input type="text" class="form-control" id="name" name="name" required>
+            <input type="text" class="form-control" id="description" name="description" required>
         </div>
 
         <div class="mb-3">

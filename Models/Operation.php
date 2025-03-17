@@ -16,10 +16,13 @@ class Operation {
     /**
      * Récupérer toutes les opérations
      */
-    public static function getAll() {
+    public static function getAll($limit = null) {
         $db = Database::getInstance();
-        return $db->fetchAll("SELECT * FROM operations_stock ORDER BY date_operation DESC");
-    }
+        if($limit)
+          return $db->fetchAll("SELECT * FROM operations_stock ORDER BY date_operation DESC LIMIT $limit");
+        else
+          return $db->fetchAll("SELECT * FROM operations_stock ORDER BY date_operation DESC");
+  }
 
     /**
      * Récupérer une opération par son ID

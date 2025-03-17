@@ -19,9 +19,15 @@ define('VIEW_PATH', ROOT_PATH . '/views');
 define('CONTROLLER_PATH', ROOT_PATH . '/Controllers');
 define('MODEL_PATH', ROOT_PATH . '/Models');
 define('ASSET_PATH', ROOT_PATH . '/public/assets');
+define('ROLE_ADMIN', 'admin');
+define('ROLE_STOREKEEPER', 'magasinier');
+define('ROLE_SECRETARY', 'secretaire');
 
 // Configuration des sessions
 define('SESSION_LIFETIME', 3600); // Durée de vie de la session en secondes (1 heure)
+
+require_once BASE_PATH . '/Utils/Helpers.php';
+
 // return [
 //     'base_path' => dirname(__DIR__),
 //     'app_url' => 'http://localhost/stock-management',

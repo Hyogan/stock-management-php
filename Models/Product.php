@@ -14,22 +14,23 @@ class Product extends Model {
      */
     public static function getAll() {
         $db = Database::getInstance();
-        return $db->fetchAll("SELECT p.*, c.nom as categorie_nom 
+        return $db->fetchAll("SELECT p.*, c.nom as categorie_nom, f.nom as fournisseur_nom
                              FROM produits p 
                              LEFT JOIN categories c ON p.id_categorie = c.id 
+                             LEFT JOIN fournisseurs f ON p.id_fournisseur = f.id
                              ORDER BY p.designation ASC");
     }
 
     /**
      * Récupère les produits par catégorie
      */
-    public static function getAllByCategory($category) {
+    public static function getAllByCategory($categoryId) {
         $db = Database::getInstance();
         return $db->fetchAll("SELECT p.*, c.nom as categorie_nom 
                              FROM produits p 
                              LEFT JOIN categories c ON p.id_categorie = c.id 
-                             WHERE c.nom = ?
-                             ORDER BY p.designation ASC", [$category]);
+                             WHERE p.id_categorie = ?
+                             ORDER BY p.designation ASC", [$categoryId]);
     }
 
     /**
@@ -37,12 +38,16 @@ class Product extends Model {
      */
     public static function getAllSorted($sort = 'designation', $order = 'asc') {
         $db = Database::getInstance();
-        $allowedColumns = ['designation', 'reference', 'prix_unitaire', 'quantite_stock', 'date_creation'];
+        $allowedColumns = ['designation', 'reference', 'prix_vente', 'quantite_stock', 'date_creation'];
         if (!in_array($sort, $allowedColumns)) {
             $sort = 'designation';
         }
         $order = strtolower($order) === 'desc' ? 'DESC' : 'ASC';
-        return $db->fetchAll("SELECT * FROM produits ORDER BY $sort $order");
+        return $db->fetchAll("SELECT p.*, c.nom as categorie_nom, f.nom as fournisseur_nom
+                             FROM produits p 
+                             LEFT JOIN categories c ON p.id_categorie = c.id 
+                             LEFT JOIN fournisseurs f ON p.id_fournisseur = f.id
+                             ORDER BY p.$sort $order");
     }
 
     /**
@@ -50,9 +55,10 @@ class Product extends Model {
      */
     public static function getById($id) {
         $db = Database::getInstance();
-        return $db->fetch("SELECT p.*, c.nom as categorie_nom 
+        return $db->fetch("SELECT p.*, c.nom as categorie_nom, f.nom as fournisseur_nom
                           FROM produits p 
                           LEFT JOIN categories c ON p.id_categorie = c.id 
+                          LEFT JOIN fournisseurs f ON p.id_fournisseur = f.id
                           WHERE p.id = ?", [$id]);
     }
 
@@ -61,20 +67,26 @@ class Product extends Model {
      */
     public static function add($data) {
         $db = Database::getInstance();
-        $query = "INSERT INTO produits (reference, designation, description, prix_achat, prix_unitaire, 
-                                      quantite_stock, id_categorie, date_creation) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        $query = "INSERT INTO produits (reference, designation, description, prix_achat, 
+                                      prix_vente, quantite_stock, quantite_alerte, id_categorie, 
+                                      id_fournisseur, unite, image, statut, date_creation) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
         $params = [
             $data['reference'],
             $data['designation'],
-            $data['description'],
-            $data['prix_achat'],
-            $data['prix_unitaire'],
-            $data['quantite_stock'],
-            $data['id_categorie']
+            $data['description'] ?? null,
+            $data['prix_achat'] ?? null,
+            $data['prix_vente'],
+            $data['quantite_stock'] ?? 0,
+            $data['quantite_alerte'] ?? 5,
+            $data['id_categorie'] ?? null,
+            $data['id_fournisseur'] ?? null,
+            $data['unite'] ?? null,
+            $data['image'] ?? null,
+            $data['statut'] ?? 'actif'
         ];
         $db->query($query, $params);
-        return $db->getConnection()->lastInsertId();
+        return $db->lastInsertId();
     }
 
     /**
@@ -87,19 +99,27 @@ class Product extends Model {
                       designation = ?, 
                       description = ?, 
                       prix_achat = ?, 
-                      prix_unitaire = ?, 
-                      quantite_stock = ?, 
-                      id_categorie = ?, 
+                      prix_vente = ?, 
+                      quantite_alerte = ?, 
+                      id_categorie = ?,
+                      id_fournisseur = ?,
+                      unite = ?,
+                      image = COALESCE(?, image),
+                      statut = ?,
                       date_modification = NOW() 
                   WHERE id = ?";
         $params = [
             $data['reference'],
             $data['designation'],
-            $data['description'],
-            $data['prix_achat'],
-            $data['prix_unitaire'],
-            $data['quantite_stock'],
-            $data['id_categorie'],
+            $data['description'] ?? null,
+            $data['prix_achat'] ?? null,
+            $data['prix_vente'],
+            $data['quantite_alerte'] ?? 5,
+            $data['id_categorie'] ?? null,
+            $data['id_fournisseur'] ?? null,
+            $data['unite'] ?? null,
+            $data['image'] ?? null,
+            $data['statut'] ?? 'actif',
             $id
         ];
         return $db->query($query, $params);
@@ -126,61 +146,6 @@ class Product extends Model {
     }
 
     /**
-     * Récupère les produits les moins vendus
-     */
-    public static function getLeastSoldProducts($limit = 10, $period = 'month') {
-        $db = Database::getInstance();
-        $dateCondition = self::getDateConditionForPeriod($period, 'cp.date_ajout');
-        $sql = "SELECT p.id, p.designation, p.reference, p.prix_unitaire, 
-                       COALESCE(SUM(cp.quantite), 0)as total_vendu
-                FROM produits p
-                LEFT JOIN commande_produit cp ON p.id = cp.id_produit
-                LEFT JOIN commandes c ON cp.id_commande = c.id
-                WHERE (c.statut != 'annulee' OR c.statut IS NULL)
-                " . ($dateCondition ? "AND $dateCondition" : "") . "
-                GROUP BY p.id
-                ORDER BY total_vendu ASC
-                LIMIT ?";
-        return $db->fetchAll($sql, [$limit]);
-    }
-
-    /**
-     * Récupère les produits les plus rentables
-     */
-    public static function getMostProfitableProducts($limit = 10, $period = 'month') {
-        $db = Database::getInstance();
-        $dateCondition = self::getDateConditionForPeriod($period, 'cp.date_ajout');
-        $sql = "SELECT p.id, p.designation, p.reference, p.prix_unitaire, 
-                       COALESCE(SUM(cp.quantite), 0) as total_vendu,
-                       COALESCE(SUM(cp.quantite * (p.prix_unitaire - p.prix_achat)), 0) as profit_total
-                FROM produits p
-                LEFT JOIN commande_produit cp ON p.id = cp.id_produit
-                LEFT JOIN commandes c ON cp.id_commande = c.id
-                WHERE (c.statut != 'annulee' OR c.statut IS NULL)
-                " . ($dateCondition ? "AND $dateCondition" : "") . "
-                GROUP BY p.id
-                ORDER BY profit_total DESC
-                LIMIT ?";
-        return $db->fetchAll($sql, [$limit]);
-    }
-
-    /**
-     * Génère la condition SQL pour filtrer par période
-     */
-    private static function getDateConditionForPeriod($period, $dateField) {
-        switch ($period) {
-            case 'month':
-                return "$dateField >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
-            case 'quarter':
-                return "$dateField >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
-            case 'year':
-                return "$dateField >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
-            default:
-                return "";
-        }
-    }
-
-    /**
      * Recherche des produits
      */
     public static function search($keyword) {
@@ -196,8 +161,50 @@ class Product extends Model {
                              [$keyword, $keyword, $keyword]);
     }
 
-    public static function searchAdvanced($keyword, $category, $minPrice, $maxPrice, $inStock) {
-        return self::search($keyword);
+    /**
+     * Recherche avancée de produits
+     */
+    public static function searchAdvanced($keyword, $categoryId, $minPrice, $maxPrice, $inStock) {
+        $db = Database::getInstance();
+        $conditions = [];
+        $params = [];
+
+        if (!empty($keyword)) {
+            $keyword = "%$keyword%";
+            $conditions[] = "(p.designation LIKE ? OR p.reference LIKE ? OR p.description LIKE ?)";
+            $params[] = $keyword;
+            $params[] = $keyword;
+            $params[] = $keyword;
+        }
+
+        if (!empty($categoryId)) {
+            $conditions[] = "p.id_categorie = ?";
+            $params[] = $categoryId;
+        }
+
+        if ($minPrice > 0) {
+            $conditions[] = "p.prix_vente >= ?";
+            $params[] = $minPrice;
+        }
+
+        if ($maxPrice > 0) {
+            $conditions[] = "p.prix_vente <= ?";
+            $params[] = $maxPrice;
+        }
+
+        if ($inStock == 1) {
+            $conditions[] = "p.quantite_stock > 0";
+        } elseif ($inStock == 0) {
+            $conditions[] = "p.quantite_stock <= 0";
+        }
+
+        $whereClause = !empty($conditions) ? " WHERE " . implode(" AND ", $conditions) : "";
+
+        return $db->fetchAll("SELECT p.*, c.nom as categorie_nom 
+                             FROM produits p 
+                             LEFT JOIN categories c ON p.id_categorie = c.id 
+                             $whereClause
+                             ORDER BY p.designation ASC", $params);
     }
 
     /**
@@ -205,16 +212,17 @@ class Product extends Model {
      */
     public static function getRecentMovements($limit = 10) {
         $db = Database::getInstance();
-        return $db->fetchAll("SELECT m.*, p.designation as produit_nom, 
+        return $db->fetchAll("SELECT os.*, p.designation as produit_nom, u.nom as nom_utilisateur, u.prenom as prenom_utilisateur,
                              CASE 
-                                 WHEN m.type = 'entree' THEN 'Entrée'
-                                 WHEN m.type = 'sortie' THEN 'Sortie'
-                                 ELSE m.type
+                                 WHEN os.type_operation = 'entry' THEN 'Entrée'
+                                 WHEN os.type_operation = 'exit' THEN 'Sortie'
+                                 ELSE os.type_operation
                              END as type_libelle,
-                             DATE_FORMAT(m.date_mouvement, '%d/%m/%Y %H:%i') as date_formatee
-                             FROM mouvements_stock m
-                             JOIN produits p ON m.id_produit = p.id
-                             ORDER BY m.date_mouvement DESC
+                             DATE_FORMAT(os.date_operation, '%d/%m/%Y %H:%i') as date_formatee
+                             FROM operations_stock os
+                             JOIN produits p ON os.id_produit = p.id
+                             LEFT JOIN utilisateurs u ON os.id_utilisateur = u.id
+                             ORDER BY os.date_operation DESC
                              LIMIT ?", [$limit]);
     }
 
@@ -225,22 +233,26 @@ class Product extends Model {
         $db = Database::getInstance();
         $db->beginTransaction();
         try {
-            $query = "INSERT INTO mouvements_stock (id_produit, quantite, type, motif, id_utilisateur, date_mouvement) 
+            // Insérer dans operations_stock
+            $query = "INSERT INTO operations_stock (id_produit, quantite, type_operation, motif, id_utilisateur, date_operation) 
                       VALUES (?, ?, ?, ?, ?, NOW())";
             $params = [
                 $productId,
                 $quantity,
-                $type,
+                $type === 'entree' ? 'entry' : 'exit',
                 $reason,
                 $userId ?? $_SESSION['user_id'] ?? null
             ];
             $db->query($query, $params);
+            
+            // Mettre à jour le stock du produit
             if ($type === 'entree') {
                 $updateQuery = "UPDATE produits SET quantite_stock = quantite_stock + ? WHERE id = ?";
             } else {
                 $updateQuery = "UPDATE produits SET quantite_stock = quantite_stock - ? WHERE id = ?";
             }
             $db->query($updateQuery, [$quantity, $productId]);
+            
             $db->commit();
             return true;
         } catch (\Exception $e) {
@@ -257,32 +269,19 @@ class Product extends Model {
         return $product && $product['quantite_stock'] >= $quantity;
     }
 
-
-    public function updateStock($id, $quantity, $type) {
-      $product = $this->getById($id);
-      if (!$product) {
-          return false;
-      }
-      // $newQuantity = $product['quantite'];
-      $newQuantity = ($type == '-') ? $product['quantite'] - $quantity : $product['quantite'] + $quantity;
-      
-      // Empêcher les quantités négatives
-      if ($newQuantity < 0) {
-          return false;
-      }
-      $product['quantite'] = $newQuantity;
-      $db = Database::getInstance();
-      return $db->update('produits',$product,$id);
-  }
-
     /**
      * Récupérer les produits avec un stock faible
      */
-    public static function getLowStock($threshold = 10) {
+    public static function getLowStock() {
         $db = Database::getInstance();
         return $db->fetchAll(
-            "SELECT * FROM produits WHERE quantite_stock <= ? ORDER BY quantite_stock",
-            [$threshold]
+            "SELECT p.*, c.nom as categorie_nom 
+             FROM produits p
+             LEFT JOIN categories c ON p.id_categorie = c.id
+             WHERE p.quantite_stock <= p.quantite_alerte 
+             AND p.quantite_stock > 0 
+             AND p.statut = 'actif'
+             ORDER BY p.quantite_stock ASC"
         );
     }
 
@@ -311,42 +310,6 @@ class Product extends Model {
     }
 
     /**
-     * Récupérer les produits les plus vendus
-     */
-    public static function getMostSold($limit = 10) {
-        $db = Database::getInstance();
-        return $db->fetchAll(
-            "SELECT p.*, SUM(cp.quantite) as total_sold 
-             FROM produits p
-             JOIN commande_produit cp ON p.id_produit = cp.id_produit
-             JOIN commandes c ON cp.id_commande = c.id
-             WHERE c.statut = 'completed'
-             GROUP BY p.id
-             ORDER BY total_sold DESC
-             LIMIT ?",
-            [$limit]
-        );
-    }
-
-    public function recordStockMovement($data) {
-        return $this->db->insert('mouvement_stock', $data);
-    }
-
-    /**
-     * Récupérer l'historique des mouvements d'un produit
-     */
-    public function getMovementHistory($productId) {
-        return $this->db->fetchAll(
-            "SELECT m.*, u.nom, u.prenom 
-            FROM mouvements_stock m 
-            LEFT JOIN utilisateurs u ON m.id_utilisateur = u.id 
-            WHERE m.id_produit = ? 
-            ORDER BY m.date_mouvement DESC",
-            [$productId]
-        );
-    }
-
-    /**
      * Compter le nombre total de produits
      */
     public static function countProducts() {
@@ -372,157 +335,189 @@ class Product extends Model {
         $params = [$reference];
         if ($excludeId) {
             $query .= " AND id != ?";
-            $params[] = $excludeId;}
-            $result = $db->fetch($query, $params);
-            return $result['count'] > 0;
+            $params[] = $excludeId;
         }
-    
-        /**
-         * Récupère tous les produits d'un fournisseur
-         */
-        public static function getAllBySupplier($supplierId) {
-            $db = Database::getInstance();
-            return $db->fetchAll("
-                SELECT * FROM produits 
-                WHERE id_fournisseur = ?
-                ORDER BY designation ASC
-            ", [$supplierId]);
-        }
-    
-        /**
-         * Récupérer le produit le plus cher
-         */
-        public static function getMostExpensiveProduct() {
-            $db = Database::getInstance();
-            return $db->fetch("SELECT * FROM produits ORDER BY prix_unitaire DESC LIMIT 1");
-        }
-    
-        /**
-         * Récupérer le produit avec le plus grand stock
-         */
-        public static function getMostInStockProduct() {
-            $db = Database::getInstance();
-            return $db->fetch("SELECT * FROM produits ORDER BY quantite_stock DESC LIMIT 1");
-        }
-    
-        /**
-         * Récupère les mouvements de stock d'un produit
-         */
-        public static function getStockMovements($productId) {
-            $db = Database::getInstance();
-            return $db->fetchAll("
-                SELECT ms.*, u.nom as nom_utilisateur 
-                FROM mouvements_stock ms
-                LEFT JOIN utilisateurs u ON ms.id_utilisateur = u.id
-                WHERE ms.id_produit = ?
-                ORDER BY ms.date_mouvement DESC
-            ", [$productId]);
-        }
-    
-        /**
-         * Récupère les statistiques des produits
-         */
-        public static function getStats() {
-            $db = Database::getInstance();
-            $stats = [];
-            $result = $db->fetch("SELECT COUNT(*) as count FROM produits");
-            $stats['total'] = $result['count'];
-            $categories = $db->fetchAll("
-                SELECT c.nom, COUNT(p.id) as count 
-                FROM categories c
-                LEFT JOIN produits p ON c.id = p.id_categorie
-                GROUP BY c.id
-                ORDER BY count DESC
-            ");
-            $stats['categories'] = $categories;
-            $statuses = $db->fetchAll("
-                SELECT statut, COUNT(*) as count 
-                FROM produits 
-                GROUP BY statut
-            ");
-            $stats['statuses'] = [];
-            foreach ($statuses as $status) {
-                $stats['statuses'][$status['statut']] = $status['count'];
-            }
-            $result = $db->fetch("
-                SELECT COUNT(*) as count 
-                FROM produits 
-                WHERE quantite_stock = 0 AND statut = 'actif'
-            ");
-            $stats['out_of_stock'] = $result['count'];
-            $result = $db->fetch("
-                SELECT COUNT(*) as count 
-                FROM produits 
-                WHERE quantite_stock <= quantite_alerte 
-                  AND quantite_stock > 0 
-                  AND statut = 'actif'
-            ");
-            $stats['low_stock'] = $result['count'];
-            $result = $db->fetch("
-                SELECT SUM(quantite_stock * prix_achat) as total_value 
-                FROM produits
-            ");
-            $stats['stock_value'] = $result['total_value'] ?? 0;
-            $stats['most_expensive'] = $db->fetchAll("
-                SELECT id, reference, designation, prix_unitaire 
-                FROM produits 
-                ORDER BY prix_unitaire DESC 
-                LIMIT 5
-            ");
-            $stats['most_stock'] = $db->fetchAll("
-                SELECT id, reference, designation, quantite_stock 
-                FROM produits 
-                ORDER BY quantite_stock DESC 
-                LIMIT 5
-            ");
-            return $stats;
-        }
-    
-        /**
-         * Récupérer les produits récemment ajoutés
-         */
-        public static function getRecent($limit = 5) {
-            $db = Database::getInstance();
-            return $db->fetchAll("
-                SELECT * FROM produits 
-                ORDER BY date_creation DESC 
-                LIMIT ?
-            ", [$limit]);
-        }
-    
-        /**
-         * Récupère les produits par plage de quantité
-         */
-        public static function getByStockRange($min, $max) {
-            $db = Database::getInstance();
-            return $db->fetchAll("
-                SELECT * FROM produits 
-                WHERE quantite_stock BETWEEN ? AND ?
-                ORDER BY quantite_stock ASC
-            ", [$min, $max]);
-        }
-    
-        /**
-         * Récupère les produits par statut
-         */
-        public static function getByStatus($status) {
-            $db = Database::getInstance();
-            return $db->fetchAll("
-                SELECT * FROM produits 
-                WHERE statut = ?
-                ORDER BY designation ASC
-            ", [$status]);
-        }
-    
-        /**
-         * Récupère les produits actifs
-         */
-        public static function getActive() {
-            $db = Database::getInstance();
-            return $db->fetchAll("
-                SELECT * FROM produits 
-                WHERE statut = 'actif'
-                ORDER BY designation ASC
-            ");
-        }
+        $result = $db->fetch($query, $params);
+        return $result['count'] > 0;
     }
+    
+    /**
+     * Récupère tous les produits d'un fournisseur
+     */
+    public static function getAllBySupplier($supplierId) {
+        $db = Database::getInstance();
+        return $db->fetchAll("
+            SELECT p.*, c.nom as categorie_nom
+            FROM produits p
+            LEFT JOIN categories c ON p.id_categorie = c.id
+            WHERE p.id_fournisseur = ?
+            ORDER BY p.designation ASC
+        ", [$supplierId]);
+    }
+
+    /**
+     * Récupérer le produit le plus cher
+     */
+    public static function getMostExpensiveProduct() {
+        $db = Database::getInstance();
+        return $db->fetch("SELECT * FROM produits ORDER BY prix_vente DESC LIMIT 1");
+    }
+
+    /**
+     * Récupérer le produit avec le plus grand stock
+     */
+    public static function getMostInStockProduct() {
+        $db = Database::getInstance();
+        return $db->fetch("SELECT * FROM produits ORDER BY quantite_stock DESC LIMIT 1");
+    }
+
+    /**
+     * Récupère les mouvements de stock d'un produit
+     */
+    public static function getStockMovements($productId) {
+        $db = Database::getInstance();
+        return $db->fetchAll("
+            SELECT os.*, u.nom as nom_utilisateur, u.prenom as prenom_utilisateur,
+            CASE 
+                WHEN os.type_operation = 'entry' THEN 'Entrée'
+                WHEN os.type_operation = 'exit' THEN 'Sortie'
+                ELSE os.type_operation
+            END as type_libelle
+            FROM operations_stock os
+            LEFT JOIN utilisateurs u ON os.id_utilisateur = u.id
+            WHERE os.id_produit = ?
+            ORDER BY os.date_operation DESC
+        ", [$productId]);
+    }
+
+    /**
+     * Récupère les statistiques des produits
+     */
+    public static function getStats() {
+        $db = Database::getInstance();
+        $stats = [];
+        
+        // Total products
+        $result = $db->fetch("SELECT COUNT(*) as count FROM produits");
+        $stats['total'] = $result['count'];
+        
+        // Products by category
+        $stats['categories'] = $db->fetchAll("
+            SELECT c.nom, COUNT(p.id) as count 
+            FROM categories c
+            LEFT JOIN produits p ON c.id = p.id_categorie
+            GROUP BY c.id
+            ORDER BY count DESC
+        ");
+        
+        // Products by status
+        $statuses = $db->fetchAll("
+            SELECT statut, COUNT(*) as count 
+            FROM produits 
+            GROUP BY statut
+        ");
+        $stats['statuses'] = [];
+        foreach ($statuses as $status) {
+            $stats['statuses'][$status['statut']] = $status['count'];
+        }
+        
+        // Out of stock products
+        $result = $db->fetch("
+            SELECT COUNT(*) as count 
+            FROM produits 
+            WHERE quantite_stock = 0 AND statut = 'actif'
+        ");
+        $stats['out_of_stock'] = $result['count'];
+        
+        // Low stock products
+        $result = $db->fetch("
+            SELECT COUNT(*) as count 
+            FROM produits 
+            WHERE quantite_stock <= quantite_alerte 
+              AND quantite_stock > 0 
+              AND statut = 'actif'
+        ");
+        $stats['low_stock'] = $result['count'];
+        
+        // Total stock value
+        $result = $db->fetch("
+            SELECT SUM(quantite_stock * prix_achat) as total_value 
+            FROM produits
+        ");
+        $stats['stock_value'] = $result['total_value'] ?? 0;
+        
+        // Most expensive products
+        $stats['most_expensive'] = $db->fetchAll("
+            SELECT id, reference, designation, prix_vente 
+            FROM produits 
+            ORDER BY prix_vente DESC 
+            LIMIT 5
+        ");
+        
+        // Products with most stock
+        $stats['most_stock'] = $db->fetchAll("
+            SELECT id, reference, designation, quantite_stock 
+            FROM produits 
+            ORDER BY quantite_stock DESC 
+            LIMIT 5
+        ");
+        
+        return $stats;
+    }
+
+    /**
+     * Récupérer les produits récemment ajoutés
+     */
+    public static function getRecent($limit = 5) {
+        $db = Database::getInstance();
+        return $db->fetchAll("
+            SELECT p.*, c.nom as categorie_nom 
+            FROM produits p
+            LEFT JOIN categories c ON p.id_categorie = c.id
+            ORDER BY p.date_creation DESC 
+            LIMIT ?
+        ", [$limit]);
+    }
+
+    /**
+     * Récupère les produits par plage de quantité
+     */
+    public static function getByStockRange($min, $max) {
+        $db = Database::getInstance();
+        return $db->fetchAll("
+            SELECT p.*, c.nom as categorie_nom 
+            FROM produits p
+            LEFT JOIN categories c ON p.id_categorie = c.id
+            WHERE p.quantite_stock BETWEEN ? AND ?
+            ORDER BY p.quantite_stock ASC
+        ", [$min, $max]);
+    }
+
+    /**
+     * Récupère les produits par statut
+     */
+    public static function getByStatus($status) {
+        $db = Database::getInstance();
+        return $db->fetchAll("
+            SELECT p.*, c.nom as categorie_nom 
+            FROM produits p
+            LEFT JOIN categories c ON p.id_categorie = c.id
+            WHERE p.statut = ?
+            ORDER BY p.designation ASC
+        ", [$status]);
+    }
+
+    /**
+     * Récupère les produits actifs
+     */
+    public static function getActive() {
+        $db = Database::getInstance();
+        return $db->fetchAll("
+            SELECT p.*, c.nom as categorie_nom 
+            FROM produits p
+            LEFT JOIN categories c ON p.id_categorie = c.id
+            WHERE p.statut = 'actif'
+            ORDER BY p.designation ASC
+        ");
+    }
+}

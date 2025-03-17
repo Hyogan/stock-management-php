@@ -26,7 +26,7 @@ class Category extends Model {
     /**
      * Ajoute une nouvelle catégorie
      */
-    public static function add($data) {
+    public static function create($data) {
         $db = Database::getInstance();
         $query = "INSERT INTO categories (nom, description, statut, date_creation) 
                  VALUES (?, ?, ?, NOW())";

@@ -26,14 +26,21 @@ class SupplierController extends Controller{
     /**
      * Affiche le formulaire d'ajout d'un fournisseur
      */
-    public function create() {
-        return [
-            'view' => 'suppliers/form',
-            'data' => [
-                'title' => 'Ajouter un fournisseur',
-                'action' => 'add'
-            ]
-        ];
+    public function create() 
+    {
+      $this->view('suppliers/create',
+      [
+        'title' => 'Ajouter un fournisseur',
+        'action' => 'add'
+      ],'admin');
+      
+        // return [
+        //     'view' => 'suppliers/form',  
+        //     'data' => [
+        //         'title' => 'Ajouter un fournisseur',
+        //         'action' => 'add'
+        //     ],'admin'
+        // ];
     }
     
     /**

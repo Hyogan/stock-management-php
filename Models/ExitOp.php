@@ -15,14 +15,18 @@ class ExitOp extends Operation {
     /**
      * Récupérer toutes les sorties
      */
-    public static function getAll() {
+    public static function getAll($limit = null) {
         $db = Database::getInstance();
-        return $db->fetchAll(
+        $sql = 
             "SELECT s.*, u.nom as nom_utilisateur 
              FROM sorties_stock s
              LEFT JOIN utilisateurs u ON s.id_utilisateur = u.id
-             ORDER BY s.date_sortie DESC"
-        );
+             ORDER BY s.date_sortie DESC";
+        if ($limit !== null) {
+            $sql .= " LIMIT ?";
+            return $db->fetchAll($sql, [$limit]);
+        }
+        return $db->fetchAll($sql);
     }
 
     /**

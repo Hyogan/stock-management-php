@@ -30,13 +30,14 @@ class Model {
     /**
      * Créer un nouvel enregistrement
      */
-    public static function create($data) {
+    public static function create($data) 
+    {
         $table = static::$table;
-        
         $columns = implode(', ', array_keys($data));
         $placeholders = implode(', ', array_fill(0, count($data), '?'));
         
         $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
+        
         
         self::$db->query($sql, array_values($data));
         return self::$db->getConnection()->lastInsertId();

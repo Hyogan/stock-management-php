@@ -113,4 +113,20 @@ use App\Utils\Database;
         
         return $userId > 0;
     }
+
+
+    public static function isAdmin() 
+    {
+      return isset($_SESSION['user_role']) && $_SESSION['user_role'] === ROLE_ADMIN;
+  }
+  
+  public static function isStorekeeper() 
+  {
+      return isset($_SESSION['user_role']) && $_SESSION['user_role'] === ROLE_STOREKEEPER;
+  }
+  
+  public static function isSecretary() 
+  {
+      return isset($_SESSION['user_role']) && $_SESSION['user_role'] === ROLE_SECRETARY;
+  }
 }
