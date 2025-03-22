@@ -228,5 +228,6 @@ class Operation {
 
         return $db->fetchAll($sql);
     }
+
 }
 

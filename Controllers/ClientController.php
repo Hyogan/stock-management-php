@@ -7,6 +7,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Client;
+use App\Utils\Auth;
 use App\Controllers\AuthController;
 
 class ClientController extends Controller {
@@ -28,7 +29,6 @@ class ClientController extends Controller {
         $clients = Client::getAll();
         // Définir le titre de la page
         $pageTitle = 'Gestion des Clients';
-        // Définir les boutons d'action
         $actionButtons = '
             <a href="' . APP_URL . '/clients/create" class="btn btn-primary">
                 <i class="bi bi-plus"></i> Ajouter un client
@@ -46,17 +46,15 @@ class ClientController extends Controller {
      * Afficher le formulaire d'ajout de client
      */
     public function create() {
-        // Vérifier les droits d'accès
-        if(!$this->authController->checkAccess('any')) {
-            return $this->view('login');
-        }
+      if(!Auth::isLoggedIn()) {
+        return $this->view('auth/login',[],'auth');
+      }
         // Définir le titre de la page
         $pageTitle = 'Ajouter un client';
-        
         // Afficher la vue
         $this->view('clients/create', [
             'pageTitle' => $pageTitle
-        ]);
+        ],'admin');
     }
     
     /**
@@ -122,11 +120,11 @@ class ClientController extends Controller {
     /**
      * Afficher les détails d'un client
      */
-    public function show($id) {
+    public function show($clientId) {
         // Vérifier les droits d'accès
         $this->authController->checkAccess('any');
         // Récupérer le client
-        $client = Client::getById($id);
+        $client = Client::getById($clientId);
         
         // Vérifier si le client existe
         if (!$client) {
@@ -136,7 +134,7 @@ class ClientController extends Controller {
         }
         
         // Récupérer les commandes du client
-        $orders = Client::getOrders($id, 5);
+        $orders = Client::getOrders($clientId, 5);
         
         // Définir le titre de la page
         $pageTitle = 'Détails du client';
@@ -146,27 +144,21 @@ class ClientController extends Controller {
             'client' => $client,
             'orders' => $orders,
             'pageTitle' => $pageTitle
-        ]);
+        ],'admin');
     }
     
     /**
      * Afficher le formulaire de modification d'un client
      */
-    public function edit($id) {
+    public function edit($clientId) {
         // Vérifier les droits d'accès
-        if(!$this->authController->checkAccess('any')){
-          return $this->view('login');
+        // die($clientId);
+
+        if(!Auth::isLoggedIn()) {
+            return $this->redirect('/login');
         }
-        
         // Récupérer le client
-        $client = $this->clientModel->getById($id);
-        
-        if (!$client) {
-            $_SESSION['error'] = "Le client demandé n'existe pas.";
-            header('Location: ' . APP_URL . '/clients');
-            exit;
-        }
-        $client = Client::getById($id);
+        $client = Client::getById($clientId);
         // Vérifier si le client existe
         if (!$client) {
             $_SESSION['error'] = 'Le client n\'existe pas';
@@ -181,26 +173,24 @@ class ClientController extends Controller {
         $this->view('clients/edit', [
             'client' => $client,
             'pageTitle' => $pageTitle
-        ]);
+        ],'admin');
     }  
     /**
      * Traiter la modification d'un client
      */
-    public function update($id) {
+    public function update($clientId) {
         // Vérifier les droits d'accès
-        if(!$this->authController->checkAccess('any')) {
-            return $this->view('login');
-        } 
-        // Récupérer le client
-        $client = $this->clientModel->getById($id);
-        
+        if (!Auth::isLoggedIn()) {
+          $this->redirect('/products');
+          exit;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
           $this->redirect('/clients');
           exit;
       }
       
       // Récupérer le client
-      $client = Client::getById($id);
+      $client = Client::getById($clientId);
       
       // Vérifier si le client existe
       if (!$client) {
@@ -236,11 +226,11 @@ class ClientController extends Controller {
               'pageTitle' => 'Modifier le client',
               'client' => $client,
               'errors' => $errors
-          ]);
+          ],'admin');
           return;
       }
       // Mettre à jour le client
-      Client::update($id, $data);
+      Client::update($clientId, $data);
       // Rediriger vers la liste des clients
       $_SESSION['success'] = 'Le client a été modifié avec succès';
       $this->redirect('/clients');

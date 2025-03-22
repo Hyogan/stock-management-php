@@ -175,21 +175,21 @@
                                     </td>
                                     <td><?= formatPrice($product['prix_vente'] ?? $product['prix']) ?></td>
                                     <td style="color: black;">
-                                        <span class="badge <?= ($product['quantite_stock'] ?? $product['stock']) > 0 ? 'badge-success' : 'badge-danger' ?>">
+                                        <span class="badge <?= ($product['quantite_stock'] ?? $product['stock']) > 0 ? 'bg-success' : 'bg-danger' ?>">
                                             <?= $product['quantite_stock'] ?? $product['stock'] ?>
                                         </span>
                                     </td>
                                     <td>
                                         <a href="<?= APP_URL ?>/products/show/<?= $product['id'] ?>" class="btn btn-info btn-sm">
-                                            <i class="bi bi-eye"></i>
+                                            <i class="bi bi-eye"></i> voir
                                         </a>
                                         <?php if ($authController->isAdmin() || $authController->isStorekeeper()): ?>
                                             <a href="<?= APP_URL ?>/products/edit/<?= $product['id'] ?>" class="btn btn-primary btn-sm">
                                                 <i class="bi bi-pencil"></i>Edit
                                             </a>
-                                            <a href="<?= APP_URL ?>/operations/create?product_id=<?= $product['id'] ?>" class="btn btn-warning btn-sm">
-                                                <i class="bi bi-box-arrow-in-down"></i>
-                                            </a>
+                                            <!-- <a href="<?= APP_URL ?>/operations/create?product_id=<?= $product['id'] ?>" class="btn btn-warning btn-sm">
+                                                <i class="bi bi-box-arrow-in-down"></i> creer une e
+                                            </a> -->
                                             <?php if ($authController->isAdmin()): ?>
                                                 <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $product['id'] ?>">
                                                     <i class="bi bi-trash"></i>

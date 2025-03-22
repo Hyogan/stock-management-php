@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Controllers\DeliveryController;
+use App\Utils\Auth;
 use App\Models\Order;
 use App\Models\Client;
 use App\Models\Product;
@@ -33,7 +35,7 @@ class OrderController extends Controller {
         if (!empty($search) || !empty($status)) {
             $orders = Order::search($search, $status, $sort, $order);
         } else {
-            $orders = Order::getAll($sort, $order);
+            $orders = Order::getAll(null, $sort, $order);
         }
 
         // Définir le titre de la page
@@ -51,9 +53,9 @@ class OrderController extends Controller {
     }
 
     // Affiche une seule commande
-    public function show($id) {
+    public function show($orderId) {
         $this->checkAuth();
-        $order = Order::getById($id);
+        $order = Order::getById($orderId);
 
         if (!$order) {
             $_SESSION['error'] = "Commande non trouvée.";
@@ -61,10 +63,17 @@ class OrderController extends Controller {
         }
 
         // Récupérer les détails de la commande
-        $orderDetails = Order::getOrderDetails($id);
-        $payments = Order::getOrderPayments($id);
+        $orderDetails = Order::getOrderDetails($orderId);
+        $payments = Order::getOrderPayments($orderId);
 
-        $this->view('order/show', [
+        // $data3 = [
+        //   '1' => $orderDetails,
+        //   '3' => $payments
+        // ];
+        // var_dump($data3);
+        // die();
+    
+        $this->view('orders/show', [
             'order' => $order,
             'orderDetails' => $orderDetails,
             'payments' => $payments
@@ -73,15 +82,14 @@ class OrderController extends Controller {
 
     // Affiche le formulaire de création
     public function create() {
-        $this->checkAuth();
-        
+      
+        $this->checkAuth();  
         // Récupérer la liste des clients pour le formulaire
         $clients = Client::getAll();
-        
         // Récupérer la liste des produits disponibles
         $products = Product::getActive();
-        
-        $this->view('order/create', [
+        // var_dump($products);
+        $this->view('orders/create', [
             'clients' => $clients,
             'products' => $products
         ], 'admin');
@@ -90,7 +98,8 @@ class OrderController extends Controller {
     // Enregistre une nouvelle commande
     public function store() {
         $this->checkAuth();
-
+        // var_dump($_POST);
+        // die();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Validation des données
             $clientId = intval($_POST['client_id'] ?? 0);
@@ -118,6 +127,7 @@ class OrderController extends Controller {
                     $totalAmount += $quantities[$index] * $prices[$index];
                 }
             }
+            $totalAmount = $_POST['montant_total'];
             
             // Créer la commande
             $orderData = [
@@ -127,7 +137,7 @@ class OrderController extends Controller {
                 'montant_total' => $totalAmount,
                 'statut' => 'pending',
                 'statut_paiement' => 'pending',
-                'date_livraison_prevue' => $_POST['delivery_date'] ?? null,
+                'date_livraison_prevue' => $_POST['date_livraison'] ?? null,
                 'notes' => $_POST['notes'] ?? null,
                 'date_creation' => date('Y-m-d H:i:s')
             ];
@@ -160,9 +170,9 @@ class OrderController extends Controller {
     }
 
     // Affiche le formulaire d'édition
-    public function edit($id) {
+    public function edit($orderId) {
         $this->checkAuth();
-        $order = Order::getById($id);
+        $order = Order::getById($orderId);
 
         if (!$order) {
             $_SESSION['error'] = "Commande non trouvée.";
@@ -176,7 +186,7 @@ class OrderController extends Controller {
         }
         
         // Récupérer les détails de la commande
-        $orderDetails = Order::getOrderDetails($id);
+        $orderDetails = Order::getOrderDetails($orderId);
         
         // Récupérer la liste des clients pour le formulaire
         $clients = Client::getByStatus('active');
@@ -184,7 +194,7 @@ class OrderController extends Controller {
         // Récupérer la liste des produits disponibles
         $products = Product::getActive();
         
-        $this->view('order/edit', [
+        $this->view('orders/edit', [
             'order' => $order,
             'orderDetails' => $orderDetails,
             'clients' => $clients,
@@ -314,6 +324,25 @@ class OrderController extends Controller {
             
             $this->redirect("/orders/$id");
         }
+    }
+
+    public function approve($id)
+    {
+        // Check if user has permission
+        if (!Auth::isAdmin()) {
+            $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'effectuer cette action.";
+            redirect('/orders');
+        }
+        $data = [
+          'statut' => 'approved' 
+        ];
+        if (Order::update($id, $data)) {
+            $_SESSION['success_message'] = 'Commande approuvée avec succès';
+        } else {
+            $_SESSION['error_message'] = 'Une erreur est survenue lors de l\'approbation de la commande';
+        }
+        
+        redirect('/orders/show/' . $id);
     }
 
     // Ajouter un paiement à une commande
@@ -452,9 +481,9 @@ class OrderController extends Controller {
       }
   }
 
-  public function delete($id) {
+  public function delete($orderId) {
     $this->checkAuth();
-    $order = Order::getById($id);
+    $order = Order::getById($orderId);
 
     if (!$order) {
         $_SESSION['error'] = "Commande non trouvée.";
@@ -468,13 +497,13 @@ class OrderController extends Controller {
     }
     
     // Supprimer les détails de la commande d'abord
-    Order::deleteOrderDetails($id);
+    Order::deleteOrderDetails($orderId);
     
     // Supprimer les paiements associés
-    Order::deleteOrderPayments($id);
+    Order::deleteOrderPayments($orderId);
     
     // Supprimer la commande
-    $deleted = Order::delete($id);
+    $deleted = Order::delete($orderId);
     
     if ($deleted) {
         $_SESSION['success'] = "Commande supprimée avec succès.";
@@ -519,7 +548,7 @@ public function stats() {
         'top_products' => Order::getTopProducts()
     ];
     
-    $this->view('order/stats', [
+    $this->view('orders/stats', [
         'pageTitle' => 'Statistiques des commandes',
         'stats' => $stats
     ], 'admin');
@@ -579,7 +608,7 @@ public function clientHistory($clientId) {
     
     $orders = Order::getByClient($clientId);
     
-    $this->view('order/client_history', [
+    $this->view('orders/client_history', [
         'pageTitle' => 'Historique des commandes - ' . $client['nom'] . ' ' . $client['prenom'],
         'client' => $client,
         'orders' => $orders
@@ -590,7 +619,7 @@ public function clientHistory($clientId) {
 public function reports() {
     $this->checkAuth();
     
-    $this->view('order/reports', [
+    $this->view('orders/reports', [
         'pageTitle' => 'Rapports des commandes'
     ], 'admin');
 }
@@ -628,7 +657,7 @@ public function generateReport() {
                 $this->redirect('/orders/reports');
         }
         
-        $this->view('order/report_result', [
+        $this->view('orders/report_result', [
             'pageTitle' => 'Résultat du rapport',
             'reportType' => $reportType,
             'startDate' => $startDate,
@@ -657,7 +686,7 @@ public function delivery($id) {
         $this->redirect("/orders/$id");
     }
     
-    $this->view('order/delivery', [
+    $this->view('orders/delivery', [
         'pageTitle' => 'Livraison de la commande',
         'order' => $order
     ], 'admin');
@@ -719,8 +748,7 @@ public function invoice($id) {
     $orderDetails = Order::getOrderDetails($id);
     $client = Client::getById($order['id_client']);
     $payments = Order::getOrderPayments($id);
-    
-    $this->view('order/invoice', [
+      $this->view('orders/invoice', [
         'pageTitle' => 'Facture de la commande',
         'order' => $order,
         'orderDetails' => $orderDetails,
@@ -728,5 +756,64 @@ public function invoice($id) {
         'payments' => $payments
     ], 'admin');
 }
+public function generateDeliveryNote($id)
+    {
+        // Check if user has permission
+        if (!Auth::isAdmin() && !Auth::isSecretary()) {
+            $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'effectuer cette action.";
+            redirect('/orders');
+        }
+        
+        $order = Order::getById($id);
+        
+        // Check if order is approved
+        if ($order['status'] !== 'approved') {
+            $_SESSION['error_message'] = 'Seules les commandes approuvées peuvent générer un bon de livraison';
+            redirect('/orders/show/' . $id);
+        }
+        
+        // Generate delivery note
+        $deliveryController = new DeliveryController();
+        $deliveryId = $deliveryController->createFromOrder($id);
+        
+        if ($deliveryId) {
+            $_SESSION['success_message'] = 'Bon de livraison généré avec succès';
+            redirect('/deliveries/show/' . $deliveryId);
+        } else {
+            $_SESSION['error_message'] = 'Une erreur est survenue lors de la génération du bon de livraison';
+            redirect('/orders/show/' . $id);
+        }
+    }
+    
+    private function checkClientSolvency($client)
+    {
+        // Implement solvency check logic
+        // For example, check if client has unpaid invoices older than 30 days
+        // or if total unpaid amount exceeds a certain threshold
+        
+        // This is a simplified example
+        // $unpaidInvoices = Order::getUnpaidInvoicesByClient($client['id']);
+        $unpaidInvoices = [];
+        $totalUnpaid = 0;
+        
+        foreach ($unpaidInvoices as $invoice) {
+            $invoiceDate = new \DateTime($invoice['date_creation']);
+            $now = new \DateTime();
+            $daysDifference = $now->diff($invoiceDate)->days;
+            
+            if ($daysDifference > 30) {
+                return false; // Client has unpaid invoices older than 30 days
+            }
+            
+            $totalUnpaid += $invoice['montant_total'];
+        }
+        
+        // If total unpaid amount exceeds 10000 DH, consider client not solvent
+        if ($totalUnpaid > 10000) {
+            return false;
+        }
+        
+        return true;
+    }
 }
 

@@ -240,14 +240,15 @@ class ProductController extends Controller{
           'category' => $category,
           'supplier' => $supplier,
           'stockMovements' => $stockMovements
-      ]);
+      ],'admin');
   }
   
     
     /**
      * Affiche le formulaire de modification d'un produit
      */
-    public function edit() {
+    public function edit($productId) 
+    {
       // Vérifier si l'utilisateur est connecté
       if (!isset($_SESSION['user_id'])) {
           $this->redirect('/login');
@@ -261,13 +262,11 @@ class ProductController extends Controller{
       }
       
       // Récupérer l'ID du produit
-      $id = $_GET['id'] ?? null;
-      
+      $id = $productId ?? null;
       if (!$id) {
           $this->redirect('/products');
           exit;
       }
-      
       // Récupérer le produit
       $product = Product::getById($id);
       
@@ -292,7 +291,7 @@ class ProductController extends Controller{
           'product' => $product,
           'categories' => $categories,
           'suppliers' => $suppliers
-      ]);
+      ], 'admin');
   }
     
     /**
@@ -301,7 +300,7 @@ class ProductController extends Controller{
   /**
      * Met à jour un produit
      */
-    public function update() {
+    public function update($productId) {
         // Vérifier si l'utilisateur est connecté
         if (!isset($_SESSION['user_id'])) {
             $this->redirect('/login');

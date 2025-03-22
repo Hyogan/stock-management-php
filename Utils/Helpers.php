@@ -13,10 +13,10 @@ function escape($data) {
 /**
  * Rediriger vers une URL
  */
-function redirect($url) {
-    header("Location: {$url}");
-    exit;
-}
+// function redirect($url) {
+//     header("Location: {$url}");
+//     exit;
+// }
 
 /**
  * Générer un jeton CSRF
@@ -72,6 +72,13 @@ function getFlashMessage() {
     return null;
 }
 
+function dd($variable) {
+  echo "<pre>";
+  print_r($variable); // Use print_r for array display
+  echo "</pre>";
+  die();
+}
+
 /**
  * Formater une date
  */
@@ -84,7 +91,7 @@ function formatDate($date, $format = 'd/m/Y H:i') {
  * Formater un prix
  */
 function formatPrice($price) {
-    return number_format($price, 2, ',', ' ') . ' DH';
+    return number_format($price, 2, ',', ' ') . ' FCFA';
 }
 
 /**

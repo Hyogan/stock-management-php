@@ -18,8 +18,20 @@
             <input type="text" name="telephone" class="form-control" required>
         </div>
         <div class="mb-3">
+            <label for="adresse" class="form-label">Adresse</label>
+            <input type="text" name="adresse" class="form-control">
+        </div>
+        <div class="mb-3">
             <label for="ville" class="form-label">Ville</label>
-            <input type="text" name="ville" class="form-control" required>
+            <input type="text" name="ville" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="code_postal" class="form-label">Code Postal</label>
+            <input type="text" name="code_postal" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="pays" class="form-label">Pays</label>
+            <input type="text" name="pays" class="form-control">
         </div>
         <button type="submit" class="btn btn-success">Enregistrer</button>
         <a href="/clients" class="btn btn-secondary">Annuler</a>

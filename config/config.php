@@ -22,6 +22,8 @@ define('ASSET_PATH', ROOT_PATH . '/public/assets');
 define('ROLE_ADMIN', 'admin');
 define('ROLE_STOREKEEPER', 'magasinier');
 define('ROLE_SECRETARY', 'secretaire');
+define('OP_TYPE_EXIT', 'sortie');
+define('OP_TYPE_ENTRY', 'entree');
 
 // Configuration des sessions
 define('SESSION_LIFETIME', 3600); // Durée de vie de la session en secondes (1 heure)

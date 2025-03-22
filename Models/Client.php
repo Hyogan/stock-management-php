@@ -20,7 +20,7 @@ class Client extends Model {
 
     public static function getByStatus($status) {
       $db = Database::getInstance();
-        return $db->fetchAll("SELECT * FROM clients ORDER BY nom, prenom WHERE status=$status");
+        return $db->fetchAll("SELECT * FROM clients WHERE statut='$status' ORDER BY nom, prenom");
     }
 
     /**

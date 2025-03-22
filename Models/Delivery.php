@@ -27,7 +27,7 @@ class Delivery extends Model {
     /**
      * Récupérer une livraison par son ID
      */
-    public function getById($id) {
+    public static function getById($id) {
         $db = Database::getInstance();
         return $db->fetch(
             "SELECT l.*, u.nom as utilisateur_nom, u.prenom as utilisateur_prenom, es.id_client, ss.id_commande
@@ -94,7 +94,7 @@ class Delivery extends Model {
     /**
      * Mettre à jour le statut d'une livraison
      */
-    public function updateStatus($id, $status) {
+    public static function updateStatus($id, $status) {
         $db = Database::getInstance();
         return $db->execute("UPDATE livraisons SET statut = ? WHERE id = ?", [$status, $id]);
     }

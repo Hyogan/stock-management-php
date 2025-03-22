@@ -21,7 +21,7 @@ $pageTitle = 'Tableau de bord Secrétaire';
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Commandes en cours</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['active_orders'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= count($orders) ?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
@@ -39,7 +39,7 @@ $pageTitle = 'Tableau de bord Secrétaire';
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Bons de livraison</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['delivery_notes'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= count($deliveries) ?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-truck fa-2x text-gray-300"></i>
@@ -75,7 +75,7 @@ $pageTitle = 'Tableau de bord Secrétaire';
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Clients</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $stats['clients'] ?? 0 ?></div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= count($clients) ?? 0 ?></div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-users fa-2x text-gray-300"></i>

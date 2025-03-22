@@ -58,7 +58,7 @@
                                     <label for="client_adresse">Adresse</label>
                                     <textarea class="form-control" id="client_adresse" name="client_adresse" rows="3"><?= isset($_POST['client_adresse']) ? htmlspecialchars($_POST['client_adresse']) : '' ?></textarea>
                                 </div>
-                            </div>
+                            </div>-
                         </div>
                     </div>
 
@@ -163,7 +163,7 @@
                         <tbody id="productsModalList">
                             <?php foreach ($products as $product): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($product['nom']) ?></td>
+                                    <td><?= htmlspecialchars($product['reference']) ?></td>
                                     <td>
                                         <?php 
                                             $categoryName = "Non catégorisé";
@@ -173,22 +173,22 @@
                                                     break;
                                                 }
                                             }
-                                            echo $categoryName;
+                                            echo $product['categorie_nom'];
                                         ?>
                                     </td>
-                                    <td><?= formatPrice($product['prix']) ?></td>
+                                    <td><?= formatPrice($product['prix_vente']) ?></td>
                                     <td>
-                                        <span class="badge <?= $product['stock'] > 0 ? 'badge-success' : 'badge-danger' ?>">
-                                            <?= $product['stock'] ?>
+                                        <span class="badge <?= $product['quantite_stock'] > 0 ? 'bg-success' : 'bg-danger' ?>">
+                                            <?= $product['quantite_stock'] ?>
                                         </span>
                                     </td>
                                     <td>
                                         <button type="button" class="btn btn-primary btn-sm select-product" 
                                                 data-id="<?= $product['id'] ?>" 
-                                                data-name="<?= htmlspecialchars($product['nom']) ?>" 
-                                                data-price="<?= $product['prix'] ?>"
-                                                data-stock="<?= $product['stock'] ?>"
-                                                <?= $product['stock'] <= 0 ? 'disabled' : '' ?>>
+                                                data-name="<?= htmlspecialchars($product['reference']) ?>" 
+                                                data-price="<?= $product['prix_vente'] ?>"
+                                                data-stock="<?= $product['quantite_stock'] ?>"
+                                                <?= $product['quantite_stock'] <= 0 ? 'disabled' : '' ?>>
                                             Sélectionner
                                         </button>
                                     </td>
@@ -247,7 +247,7 @@
                 <td>
                     ${productName}
                     <input type="hidden" name="products[${productRowCount}][id]" value="${productId}">
-                    <input type="hidden" name="products[${productRowCount}][nom]" value="${productName}">
+                    <input type="hidden" name="products[${productRowCount}][reference]" value="${productName}">
                 </td>
                 <td>
                     <input type="number" class="form-control product-quantity" name="products[${productRowCount}][quantite]" min="1" max="${productStock}" value="1" required>

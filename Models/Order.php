@@ -11,14 +11,18 @@ class Order extends Model {
     /**
      * Récupère toutes les commandes
      */
-    public static function getAll($sort = 'date_creation', $order = 'desc') {
+    public static function getAll($limit = null ,$sort = 'date_creation', $order = 'desc') {
         $db = Database::getInstance();
         $query = "SELECT c.*, cl.nom as client_nom, cl.prenom as client_prenom, u.nom as user_nom, u.prenom as user_prenom 
                  FROM commandes c
                  JOIN clients cl ON c.id_client = cl.id
                  JOIN utilisateurs u ON c.id_utilisateur = u.id
                  ORDER BY c.{$sort} {$order}";
-        return $db->fetchAll($query);
+        if ($limit !== null) {
+          $query .= " LIMIT ?";
+          return $db->fetchAll($query, [$limit]);
+      }
+      return $db->fetchAll($query);
     }
     
     /**
@@ -56,6 +60,19 @@ class Order extends Model {
                  WHERE c.id = ?";
         return $db->fetch($query, [$id]);
     }
+
+    /**
+     * Récupère une commande par son statut
+     */
+    public static function getByStatus($status) {
+      $db = Database::getInstance();
+      $query = "SELECT c.*, cl.nom as client_nom, cl.prenom as client_prenom, u.nom as user_nom, u.prenom as user_prenom 
+               FROM commandes c
+               JOIN clients cl ON c.id_client = cl.id
+               JOIN utilisateurs u ON c.id_utilisateur = u.id
+               WHERE c.statut = ?";
+      return $db->fetch($query, [$status]);
+  }
     
     /**
      * Récupère les détails d'une commande
@@ -517,4 +534,102 @@ class Order extends Model {
         $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+      /**
+     * Fetches order items for a given order ID.
+     *
+     * @param int $orderId The ID of the order.
+     * @return array|null An array of order items, or null if an error occurs.
+     */
+    public static function getOrderItems($orderId) 
+    {
+      $db = Database::getInstance();
+      try {
+          $sql = "SELECT 
+                      dc.id, 
+                      dc.id_commande,
+                      dc.id_produit,
+                      p.designation AS produit_designation,
+                      dc.quantite, 
+                      dc.prix_unitaire, 
+                      dc.montant_total 
+                  FROM 
+                      details_commande dc
+                  JOIN 
+                      produits p ON dc.id_produit = p.id
+                  WHERE 
+                      dc.id_commande = :orderId";
+
+          $stmt = $db->prepare($sql); // Assuming $this->db is your PDO connection
+          $stmt->bindParam(':orderId', $orderId, \PDO::PARAM_INT);
+          $stmt->execute();
+
+          return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+      } catch (\PDOException $e) {
+          // Log the error or handle it appropriately
+          error_log("Error fetching order items: " . $e->getMessage());
+          return null; // Or throw an exception, depending on your error handling strategy
+      }
+  }
+
+
+  /**
+     * Récupère les éléments d'une commande (details_commande) par id_commande.
+     *
+     * @param int $orderId L'ID de la commande.
+     * @return array|null Un tableau d'éléments de commande, ou null en cas d'erreur.
+     */
+    public static function getItems($orderId) {
+      $db = Database::getInstance();
+      try {
+          $sql = "SELECT 
+                      dc.id, 
+                      dc.id_commande,
+                      dc.id_produit,
+                      p.designation AS produit_designation,
+                      dc.quantite, 
+                      dc.prix_unitaire, 
+                      dc.montant_total 
+                  FROM 
+                      details_commande dc
+                  JOIN 
+                      produits p ON dc.id_produit = p.id
+                  WHERE 
+                      dc.id_commande = :orderId";
+
+          $stmt = $db->prepare($sql);
+          $stmt->bindParam(':orderId', $orderId, \PDO::PARAM_INT);
+          $stmt->execute();
+
+          return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+      } catch (\PDOException $e) {
+          error_log("Erreur lors de la récupération des éléments de la commande : " . $e->getMessage());
+          return null;
+      }
+  }
+
+   /**
+     * Récupère les informations du client par id_client.
+     *
+     * @param int $clientId L'ID du client.
+     * @return array|null Les informations du client, ou null en cas d'erreur.
+     */
+    public static function getClient($clientId) {
+      $db = Database::getInstance();
+      try {
+          $sql = "SELECT * FROM clients WHERE id = :clientId";
+
+          $stmt = $db->prepare($sql);
+          $stmt->bindParam(':clientId', $clientId, \PDO::PARAM_INT);
+          $stmt->execute();
+
+          return $stmt->fetch(\PDO::FETCH_ASSOC);
+
+      } catch (\PDOException $e) {
+          error_log("Erreur lors de la récupération des informations du client : " . $e->getMessage());
+          return null;
+      }
+  }
+
 }

@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 
+use App\Models\Client;
 use App\Utils\Auth;
 use App\Core\Controller;
 use App\Models\Product;
@@ -63,14 +64,18 @@ class DashboardController extends Controller
     private function secretaryDashboard()
     {
         // Fetch data for the secretary's dashboard
-        $orders = Order::where('statut', 'en_attente'); // Example: Fetch pending orders
+        $orders = Order::where('statut', 'pending');// Example: Fetch pending orders
+        $orders = Order::getAll();
         $deliveries = Delivery::getAll(); // Example: Fetch recent deliveries
-        // ... fetch other data
+        $clients = Client::getAll(); 
+        $recentOrders = Order::getAll(10);
 
         // Load the secretary dashboard view
         $this->view('dashboard/secretary', [
             'orders' => $orders,
             'deliveries' => $deliveries,
+            'clients' => $clients,
+            'recentOrders' => $recentOrders
             // ... pass other data
         ],'admin');
     }

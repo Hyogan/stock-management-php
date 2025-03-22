@@ -129,4 +129,36 @@ use App\Utils\Database;
   {
       return isset($_SESSION['user_role']) && $_SESSION['user_role'] === ROLE_SECRETARY;
   }
+
+  public static function checkAccess($requiredRole) {
+    if (!self::isLoggedIn()) {
+        header('Location: ' . APP_URL . '/auth/login');
+        exit;
+    }
+    $hasAccess = false;
+    
+    switch ($requiredRole) {
+        case 'admin':
+            $hasAccess = Auth::isAdmin();
+            break;
+        case 'magasinier':
+            $hasAccess = Auth::isStorekeeper();
+            break;
+        case 'secretaire':
+            $hasAccess = Auth::isSecretary();
+            break;
+        case 'any':
+            $hasAccess = true;
+            break;
+        default:
+            $hasAccess = false;
+            break;
+    }
+    
+    if (!$hasAccess) {
+        // Rediriger vers une page d'accès refusé
+        header('Location: ' . APP_URL . '/access-denied');
+        exit;
+    }
+}
 }

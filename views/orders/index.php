@@ -120,7 +120,7 @@
                                                 $statusText = $order['statut'];
                                         }
                                         ?>
-                                        <span class="badge badge-<?= $statusClass ?>"><?= $statusText ?></span>
+                                        <span class="badge bg-<?= $statusClass ?>"><?= $statusText ?></span>
                                     </td>
                                     <td>
                                         <?php
@@ -145,17 +145,17 @@
                                                 $paymentText = $order['statut_paiement'];
                                         }
                                         ?>
-                                        <span class="badge badge-<?= $paymentClass ?>"><?= $paymentText ?></span>
+                                        <span class="badge bg-<?= $paymentClass ?>"><?= $paymentText ?></span>
                                     </td>
                                     <td>
-                                        <a href="/orders/<?= $order['id'] ?>" class="btn btn-info btn-sm">
+                                        <a href="/orders/show/<?= $order['id'] ?>" class="btn btn-info btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <?php if ($order['statut'] === 'pending'): ?>
-                                            <a href="/orders/<?= $order['id'] ?>/edit" class="btn btn-primary btn-sm">
+                                            <a href="/orders/edit/<?= $order['id'] ?>" class="btn btn-primary btn-sm">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="#" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $order['id'] ?>">
+                                            <a href="/orders/delete/<?= $order['id'] ?>" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $order['id'] ?>">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         <?php endif; ?>

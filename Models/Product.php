@@ -229,9 +229,11 @@ class Product extends Model {
     /**
      * Ajoute un mouvement de stock
      */
-    public static function addStockMovement($productId, $quantity, $type, $reason = null, $userId = null) {
-        $db = Database::getInstance();
-        $db->beginTransaction();
+    public static function addStockMovement($productId, $quantity, $type, $reason = null, $userId = null,$db = null) {
+        // $db = Database::getInstance();
+        if ($db === null) {
+          $db = Database::getInstance();
+        }
         try {
             // Insérer dans operations_stock
             $query = "INSERT INTO operations_stock (id_produit, quantite, type_operation, motif, id_utilisateur, date_operation) 
@@ -252,11 +254,8 @@ class Product extends Model {
                 $updateQuery = "UPDATE produits SET quantite_stock = quantite_stock - ? WHERE id = ?";
             }
             $db->query($updateQuery, [$quantity, $productId]);
-            
-            $db->commit();
             return true;
         } catch (\Exception $e) {
-            $db->rollback();
             throw $e;
         }
     }

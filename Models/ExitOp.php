@@ -46,22 +46,27 @@ class ExitOp extends Operation {
     /**
      * Créer une nouvelle sortie de stock
      */
-    public static function create($data, $products = null) {
+    public static function create2($data, $products = null) {
         $db = Database::getInstance();
         try {
             $db->beginTransaction();
 
             $exitId = $db->insert('sorties_stock', [
-                'reference' => $data['reference'] ?? generateReference('SOR'),
-                'id_produit' => $data['id_produit'],
-                'quantite' => $data['quantite'],
-                'motif' => $data['motif'],
-                'date_sortie' => $data['date_sortie'],
+                'reference' =>  generateReference('SOR'),
+                'date_sortie' => $data['date_sortie'] ?? date('Y-m-d H:i:s'), 
                 'id_utilisateur' => $data['id_utilisateur'],
+                'type_sortie' => $data['type_sortie'],
+                'id_commande' => $_POST['id_commande'] ?? null,
+                'destination' => $_POST['destination'] ?? null,
+                'montant_total' => $_POST['montant_total'] ?? '',
+                'notes' => $_POST['notes'] ?? '',
+                'statut' => $_POST['montant_total'] ?? '',
                 'date_creation' => date('Y-m-d H:i:s'),
+                'id_produit' => $data['id_produit'],
+                'id_livraison' => $_POST['id_livraison'] ?? null,
             ]);
 
-            self::updateProductStock($data['id_produit'], $data['quantite'], '-');
+            self::updateProductStock($data['id_produit'], $data['quantite'], OP_TYPE_EXIT);
 
             $db->commit();
             return $exitId;
@@ -71,12 +76,60 @@ class ExitOp extends Operation {
         }
     }
 
+     /**
+     * Créer une nouvelle sortie de stock
+     */
+    public static function create($data, $products = null)
+    {
+      $db = Database::getInstance();
+      try {
+          $db->beginTransaction();
+
+          $exitId = $db->insert('sorties_stock', [
+              'reference' => $data['reference'] ?? generateReference('SOR'),
+              'date_sortie' => $data['date_sortie'],
+              'id_utilisateur' => $data['id_utilisateur'],
+              'type_sortie' => $data['type_sortie'],
+              'id_commande' => $data['id_commande'] ?? null,
+              'destination' => $data['destination'] ?? null,
+              'montant_total' => $data['montant_total'],
+              'notes' => $data['notes'] ?? null,
+              'id_livraison' => $data['id_livraison'] ?? null,
+              'statut' => 'en_attente', // Or 'en_attente' if needed
+              'date_creation' => date('Y-m-d H:i:s'),
+          ]);
+
+          if ($products !== null) {
+              foreach ($products as $product) {
+                  if (!Product::isInStock($product['id_produit'], $product['quantite'])) {
+                      throw new Exception("Le produit ID {$product['id_produit']} n'est pas disponible en quantité suffisante.");
+                  }
+
+                  $db->insert('details_sortie_stock', [
+                      'id_sortie' => $exitId,
+                      'id_produit' => $product['id_produit'],
+                      'quantite' => $product['quantite'],
+                      'prix_unitaire' => $product['prix_unitaire'],
+                      'montant_total' => $product['quantite'] * $product['prix_unitaire'],
+                  ]);
+
+                  self::updateProductStock($product['id_produit'], $product['quantite'], '-');
+              }
+          }
+
+          $db->commit();
+          return $exitId;
+      } catch (Exception $e) {
+          $db->rollBack();
+          throw $e;
+      }
+  }
+
     /**
      * Mettre à jour le stock d'un produit
      */
     protected static function updateProductStock($productId, $quantity, $type) {
-        $productModel = new Product();
-        return $productModel->updateStock($productId, $quantity, $type);
+        return Product::addStockMovement($productId, $quantity, $type);
     }
 
     /**
@@ -310,4 +363,58 @@ class ExitOp extends Operation {
           [$exitId]
       );
   }
+
+
+  public static function createExitFromDelivery($delivery, $order, $orderItems) {
+    try {
+        self::$db->getConnection()->beginTransaction();
+
+        // Prepare data for sorties_stock insertion
+        $exitData = [
+            'reference' => 'EX-' . time(), // Generate a unique reference
+            'date_sortie' => date('Y-m-d H:i:s'),
+            'id_utilisateur' => $_SESSION['user_id'], // Assuming user is logged in
+            'id_livraison' => $delivery['id'],
+            'destination' => $order['id_client'], // Or any destination logic
+            'montant_total' => $order['montant_total'], // Or calculate from orderItems
+            'notes' => 'Sortie de stock à partir de la livraison ' . $delivery['reference'],
+            'statut' => 'validee',
+            'date_creation' => date('Y-m-d H:i:s')
+        ];
+
+        $exitId = self::create($exitData);
+
+        // Prepare data for details_sortie_stock insertion
+        $detailSql = "INSERT INTO details_sortie_stock (id_sortie, id_produit, quantite, prix_unitaire, montant_total) VALUES (:id_sortie, :id_produit, :quantite, :prix_unitaire, :montant_total)";
+        $detailStmt = self::$db->getConnection()->prepare($detailSql);
+
+        foreach ($orderItems as $item) {
+            $detailData = [
+                ':id_sortie' => $exitId,
+                ':id_produit' => $item['id_produit'],
+                ':quantite' => $item['quantite'],
+                ':prix_unitaire' => $item['prix_unitaire'],
+                ':montant_total' => $item['montant_total']
+            ];
+            $detailStmt->execute($detailData);
+
+            // Update product stock
+            $updateStockSql = "UPDATE produits SET quantite_stock = quantite_stock - :quantite WHERE id = :id_produit";
+            $updateStockStmt = self::$db->getConnection()->prepare($updateStockSql);
+            $updateStockStmt->execute([
+                ':quantite' => $item['quantite'],
+                ':id_produit' => $item['id_produit']
+            ]);
+        }
+
+        self::$db->getConnection()->commit();
+        return $exitId;
+
+    } catch (\PDOException $e) {
+        self::$db->getConnection()->rollBack();
+        error_log("Error creating exit from delivery: " . $e->getMessage());
+        return false;
+    }
+}
+
 }

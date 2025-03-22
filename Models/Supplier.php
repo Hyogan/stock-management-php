@@ -6,7 +6,6 @@ use App\Utils\Database;
 
 class Supplier extends Model {
     protected static $table = 'fournisseurs';
-    
     /**
      * Récupère tous les fournisseurs
      */

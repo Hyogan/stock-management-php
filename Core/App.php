@@ -41,7 +41,6 @@ class App {
                     $params[$name] = $matches[$index + 1];
                 }
             }
-            
             $controllerName = $handler[0];
             $action = $handler[1];
             

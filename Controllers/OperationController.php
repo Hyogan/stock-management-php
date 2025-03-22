@@ -1,243 +1,273 @@
 <?php
-  /**
- * Contrôleur des Opérations
- * Gère toutes les opérations liées aux mouvements de stock
- */
-class OperationController {
-  private $operationModel;
-  private $productModel;
-  private $authController;
-  
-  public function __construct() {
-      $this->operationModel = new Operation();
-      $this->productModel = new Product();
-      $this->authController = new AuthController();
-  }
-  
-  /**
-   * Afficher la liste des opérations
-   */
-  public function index() {
-      // Vérifier les droits d'accès
-      $this->authController->checkAccess('any');
-      
-      // Récupérer toutes les opérations
-      $operations = $this->operationModel->getAll();
-      
-      // Définir le titre de la page
-      $pageTitle = 'Journal des Opérations';
-      
-      // Définir les boutons d'action
-      $actionButtons = '';
-      
-      if ($this->authController->isAdmin() || $this->authController->isStorekeeper()) {
-          $actionButtons .= '
-              <a href="' . APP_URL . '/operations/create" class="btn btn-primary">
-                  <i class="bi bi-plus"></i> Nouvelle opération
-              </a>
-          ';
-      }
-      
-      // Afficher la vue
-      require_once BASE_PATH . '/views/layouts/header.php';
-      require_once BASE_PATH . '/views/operations/index.php';
-      require_once BASE_PATH . '/views/layouts/footer.php';
-  }
-  
-  /**
-   * Afficher le formulaire de création d'une opération
-   */
-  public function create() {
-      // Vérifier les droits d'accès
-      if (!$this->authController->isAdmin() && !$this->authController->isStorekeeper()) {
-          $this->authController->checkAccess('admin');
-      }
-      
-      // Récupérer tous les produits
-      $products = $this->productModel->getAll();
-      
-      // Définir le titre de la page
-      $pageTitle = 'Nouvelle Opération de Stock';
-      
-      // Afficher la vue
-      require_once BASE_PATH . '/views/layouts/header.php';
-      require_once BASE_PATH . '/views/operations/create.php';
-      require_once BASE_PATH . '/views/layouts/footer.php';
-  }
-  
-  /**
-   * Traiter la création d'une opération
-   */
-  public function store() {
-      // Vérifier les droits d'accès
-      if (!$this->authController->isAdmin() && !$this->authController->isStorekeeper()) {
-          $this->authController->checkAccess('admin');
-      }
-      
-      // Vérifier si le formulaire a été soumis
-      if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-          // Récupérer les données du formulaire
-          $operationData = [
-              'id_produit' => $_POST['id_produit'] ?? 0,
-              'type_operation' => $_POST['type_operation'] ?? '',
-              'quantite' => $_POST['quantite'] ?? 0,
-              'motif' => $_POST['motif'] ?? '',
-              'id_utilisateur' => $_SESSION['user_id']
-          ];
-          
-          // Valider les données
-          $errors = [];
-          
-          if (empty($operationData['id_produit']) || $operationData['id_produit'] <= 0) {
-              $errors[] = "Veuillez sélectionner un produit.";
-          }
-          
-          if (empty($operationData['type_operation'])) {
-              $errors[] = "Veuillez sélectionner un type d'opération.";
-          }
-          
-          if (!is_numeric($operationData['quantite']) || $operationData['quantite'] <= 0) {
-              $errors[] = "La quantité doit être un nombre positif.";
-          }
-          
-          // Vérifier si le produit existe
-          $product = $this->productModel->getById($operationData['id_produit']);
-          if (!$product) {
-              $errors[] = "Le produit sélectionné n'existe pas.";
-          }
-          
-          // Vérifier si la quantité est suffisante pour une sortie
-          if ($operationData['type_operation'] === 'sortie' && $product && $operationData['quantite'] > $product['quantite']) {
-              $errors[] = "La quantité en stock est insuffisante pour cette opération.";
-          }
-          
-          // S'il y a des erreurs, afficher le formulaire avec les erreurs
-          if (!empty($errors)) {
-              $error = implode('<br>', $errors);
-              $pageTitle = 'Nouvelle Opération de Stock';
-              $products = $this->productModel->getAll();
-              
-              require_once BASE_PATH . '/views/layouts/header.php';
-              require_once BASE_PATH . '/views/operations/create.php';
-              require_once BASE_PATH . '/views/layouts/footer.php';
-              return;
-          }
-          
-          try {
-              // Créer l'opération
-              $operationId = $this->operationModel->create($operationData);
-              
-              // Mettre à jour le stock du produit
-              if ($operationData['type_operation'] === 'entree') {
-                  $this->productModel->updateStock($operationData['id_produit'], $operationData['quantite'], '+');
-              } else {
-                  $this->productModel->updateStock($operationData['id_produit'], $operationData['quantite'], '-');
-              }
-              
-              // Rediriger vers la liste des opérations
-              $_SESSION['success'] = "L'opération a été enregistrée avec succès.";
-              header('Location: ' . APP_URL . '/operations');
-              exit;
-          } catch (Exception $e) {
-              // Afficher le formulaire avec l'erreur
-              $error = "Erreur lors de l'enregistrement de l'opération : " . $e->getMessage();
-              $pageTitle = 'Nouvelle Opération de Stock';
-              $products = $this->productModel->getAll();
-              
-              require_once BASE_PATH . '/views/layouts/header.php';
-              require_once BASE_PATH . '/views/operations/create.php';
-              require_once BASE_PATH . '/views/layouts/footer.php';
-          }
-      } else {
-          // Rediriger vers le formulaire de création
-          header('Location: ' . APP_URL . '/operations/create');
-          exit;
-      }
-  }
-  
-  /**
-   * Afficher les détails d'une opération
-   */
-  public function show($id) {
-      // Vérifier les droits d'accès
-      $this->authController->checkAccess('any');
-      
-      // Récupérer l'opération
-      $operation = $this->operationModel->getById($id);
-      
-      if (!$operation) {
-          $_SESSION['error'] = "L'opération demandée n'existe pas.";
-          header('Location: ' . APP_URL . '/operations');
-          exit;
-      }
-      
-      // Récupérer le produit associé
-      $product = $this->productModel->getById($operation['id_produit']);
-      
-      // Récupérer l'utilisateur qui a effectué l'opération
-      $user = $this->operationModel->getUser($operation['id_utilisateur']);
-      
-      // Définir le titre de la page
-      $pageTitle = 'Détails de l\'Opération #' . $operation['id_operation'];
-      
-      // Afficher la vue
-      require_once BASE_PATH . '/views/layouts/header.php';
-      require_once BASE_PATH . '/views/operations/show.php';
-      require_once BASE_PATH . '/views/layouts/footer.php';
-  }
-  
-  /**
-   * Filtrer les opérations par date
-   */
-  public function filter() {
-      // Vérifier les droits d'accès
-      $this->authController->checkAccess('any');
-      
-      // Récupérer les dates du formulaire
-      $startDate = $_GET['start_date'] ?? '';
-      $endDate = $_GET['end_date'] ?? '';
-      $productId = $_GET['product_id'] ?? '';
-      $operationType = $_GET['operation_type'] ?? '';
-      
-      // Valider les dates
-      if (empty($startDate) || empty($endDate)) {
-          $_SESSION['error'] = "Veuillez spécifier une période.";
-          header('Location: ' . APP_URL . '/operations');
-          exit;
-      }
-      
-      // Récupérer les opérations filtrées
-      $operations = $this->operationModel->filter($startDate, $endDate, $productId, $operationType);
-      
-      // Définir le titre de la page
-      $pageTitle = 'Opérations du ' . formatDate($startDate, 'd/m/Y') . ' au ' . formatDate($endDate, 'd/m/Y');
-      
-      // Définir les boutons d'action
-      $actionButtons = '';
-      
-      if ($this->authController->isAdmin() || $this->authController->isStorekeeper()) {
-          $actionButtons .= '
-              <a href="' . APP_URL . '/operations/create" class="btn btn-primary">
-                  <i class="bi bi-plus"></i> Nouvelle opération
-              </a>
-          ';
-      }
-      
-      // Afficher la vue
-      require_once BASE_PATH . '/views/layouts/header.php';
-      require_once BASE_PATH . '/views/operations/index.php';
-      require_once BASE_PATH . '/views/layouts/footer.php';
-  }
-  
-  /**
-   * Exporter les opérations au format CSV
-   */
-  public function exportCsv() {
-      // Vérifier les droits d'accès
-      $this->authController->checkAccess('any');
-      
-      // Récupérer les paramètres de filtre
-      // <!-- $startDate = $_GET['start_date'] ?? '';
-      // $endDate = $_GET['en ']
-  }
+namespace App\Controllers;
+
+use App\Core\Controller;
+use App\Models\Entry;
+use App\Models\ExitOp;
+use App\Models\Product;
+use App\Utils\Auth;
+
+class OperationController extends Controller {
+    private $entryModel;
+    private $exitModel;
+
+    public function __construct() {
+        $this->entryModel = new Entry();
+        $this->exitModel = new ExitOp();
+    }
+
+    /**
+     * Afficher la liste des opérations
+     */
+    public function index() {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Récupérer toutes les opérations
+        $entries = $this->entryModel->getAll();
+        $exits = $this->exitModel->getAll();
+        // Définir le titre de la page
+        $pageTitle = 'Gestion des Opérations';
+        // Afficher la vue
+        $this->view('operations/index', [
+            'entries' => $entries,
+            'exits' => $exits,
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+    /**
+     * Afficher le formulaire d'ajout d'une entrée de stock
+     */
+    public function createEntry() {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Définir le titre de la page
+        $pageTitle = 'Ajouter une Entrée de Stock';
+        // Afficher la vue
+        $this->view('stock/create_entry', [
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+
+
+    /**
+     * Traiter l'ajout d'une entrée de stock
+     */
+    public function storeEntry() {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Vérifier si le formulaire a été soumis
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/entries');
+            exit;
+        }
+        // Récupérer les données du formulaire
+        $data = [
+            'reference' => $_POST['reference'] ?? '',
+            'id_fournisseur' => $_POST['id_fournisseur'] ?? '',
+            'date_entree' => $_POST['date_entree'] ?? '',
+            'montant_total' => $_POST['montant_total'] ?? '',
+            'notes' => $_POST['notes'] ?? '',
+            'id_utilisateur' => $_SESSION['user_id']
+        ];
+        // Ajouter l'entrée de stock
+        $this->entryModel->create($data);
+        // Rediriger vers la liste des opérations
+        $_SESSION['success'] = 'L\'entrée de stock a été ajoutée avec succès';
+        $this->redirect('/entries');
+    }
+
+    /**
+     * Afficher le formulaire de modification d'une entrée de stock
+     */
+    public function editEntry($entryId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Récupérer l'entrée de stock
+        $entry = $this->entryModel->getById($entryId);
+        // Définir le titre de la page
+        $pageTitle = 'Modifier une Entrée de Stock';
+        // Afficher la vue
+        $this->view('stock/edit_entry', [
+            'entry' => $entry,
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+    /**
+     * Traiter la modification d'une entrée de stock
+     */
+    public function updateEntry($entryId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Vérifier si le formulaire a été soumis
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/entries');
+            exit;
+        }
+        // Récupérer les données du formulaire
+        $data = [
+            'reference' => $_POST['reference'] ?? '',
+            'id_fournisseur' => $_POST['id_fournisseur'] ?? '',
+            'date_entree' => $_POST['date_entree'] ?? '',
+            'montant_total' => $_POST['montant_total'] ?? '',
+            'notes' => $_POST['notes'] ?? ''
+        ];
+        // Mettre à jour l'entrée de stock
+        $this->entryModel->update($entryId, $data);
+        // Rediriger vers la liste des opérations
+        $_SESSION['success'] = 'L\'entrée de stock a été mise à jour avec succès';
+        $this->redirect('/entries');
+    }
+
+    /**
+     * Afficher les détails d'une entrée de stock
+     */
+    public function showEntry($entryId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Récupérer l'entrée de stock
+        $entry = $this->entryModel->getById($entryId);
+        // Définir le titre de la page
+        $pageTitle = 'Détails de l\'Entrée de Stock';
+        // Afficher la vue
+        $this->view('stock/entry', [
+            'entry' => $entry,
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+    /**
+     * Supprimer une entrée de stock
+     */
+    public function deleteEntry($entryId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Supprimer l'entrée de stock
+        $this->entryModel->delete($entryId);
+        // Rediriger vers la liste des opérations
+        $_SESSION['success'] = 'L\'entrée de stock a été supprimée avec succès';
+        $this->redirect('/entries');
+    }
+
+    /**
+     * Afficher le formulaire d'ajout d'une sortie de stock
+     */
+    public function createExit() {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Définir le titre de la page
+        $pageTitle = 'Ajouter une Sortie de Stock';
+        // Afficher la vue
+        $this->view('stock/create_exit', [
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+    /**
+     * Traiter l'ajout d'une sortie de stock
+     */
+    public function storeExit() {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Vérifier si le formulaire a été soumis
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/exits');
+            exit;
+        }
+        // Récupérer les données du formulaire
+        $data = [
+            'reference' => $_POST['reference'] ?? '',
+            'type_sortie' => $_POST['type_sortie'] ?? '',
+            'date_sortie' => $_POST['date_sortie'] ?? '',
+            'montant_total' => $_POST['montant_total'] ?? '',
+            'notes' => $_POST['notes'] ?? '',
+            'id_utilisateur' => $_SESSION['user_id']
+        ];
+        // Ajouter la sortie de stock
+        $this->exitModel->create($data);
+        // Rediriger vers la liste des opérations
+        $_SESSION['success'] = 'La sortie de stock a été ajoutée avec succès';
+        $this->redirect('/exits');
+    }
+
+    /**
+     * Afficher le formulaire de modification d'une sortie de stock
+     */
+    public function editExit($exitId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Récupérer la sortie de stock
+        $exit = $this->exitModel->getById($exitId);
+        // Définir le titre de la page
+        $pageTitle = 'Modifier une Sortie de Stock';
+        // Afficher la vue
+        $this->view('stock/edit_exit', [
+            'exit' => $exit,
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+    /**
+     * Traiter la modification d'une sortie de stock
+     */
+    public function updateExit($exitId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Vérifier si le formulaire a été soumis
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/exits');
+            exit;
+        }
+        // Récupérer les données du formulaire
+        $data = [
+            'reference' => $_POST['reference'] ?? '',
+            'type_sortie' => $_POST['type_sortie'] ?? '',
+            'date_sortie' => $_POST['date_sortie'] ?? '',
+            'montant_total' => $_POST['montant_total'] ?? '',
+            'notes' => $_POST['notes'] ?? ''
+        ];
+        // Mettre à jour la sortie de stock
+        $this->exitModel->update($exitId, $data);
+        // Rediriger vers la liste des opérations
+        $_SESSION['success'] = 'La sortie de stock a été mise à jour avec succès';
+        $this->redirect('/exits');
+    }
+
+    /**
+     * Afficher les détails d'une sortie de stock
+     */
+    public function showExit($exitId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Récupérer la sortie de stock
+        $exit = $this->exitModel->getById($exitId);
+        // Définir le titre de la page
+        $pageTitle = 'Détails de la Sortie de Stock';
+        // Afficher la vue
+        $this->view('stock/exit', [
+            'exit' => $exit,
+            'pageTitle' => $pageTitle
+        ], 'admin');
+    }
+
+    /**
+     * Supprimer une sortie de stock
+     */
+    public function deleteExit($exitId) {
+        // Vérifier les droits d'accès
+        Auth::checkAccess('any');
+        // Supprimer la sortie de stock
+        $this->exitModel->delete($exitId);
+        // Rediriger vers la liste des opérations
+        $_SESSION['success'] = 'La sortie de stock a été supprimée avec succès';
+        $this->redirect('/exits');
+    }
+
+
+    public function createExitFromDelivery($delivery, $order, $orderItems) 
+    {
+      return ExitOp::createExitFromDelivery($delivery, $order, $orderItems);
+    }
 }

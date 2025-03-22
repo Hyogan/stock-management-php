@@ -11,6 +11,7 @@ $routes = [];
 // Routes d'authentification
 $routes['/'] = ['HomeController', 'index'];
 $routes['/auth/login'] = ['AuthController', 'login'];
+$routes['/login'] = ['AuthController', 'login'];
 $routes['/auth/authenticate'] = ['AuthController', 'authenticate'];
 $routes['/auth/logout'] = ['AuthController', 'logout'];
 $routes['/auth/register'] = ['AuthController', 'register'];
@@ -23,12 +24,13 @@ $routes['/dashboard'] = ['DashboardController', 'index'];
 
 // Routes des produits
 $routes['/products'] = ['ProductController', 'index'];
+$routes['/products/filter'] = ['ProductController', 'index'];
 $routes['/products/create'] = ['ProductController', 'create'];
 $routes['/products/store'] = ['ProductController', 'store'];
-$routes['/products/edit'] = ['ProductController', 'edit'];
-$routes['/products/update'] = ['ProductController', 'update'];
-$routes['/products/delete'] = ['ProductController', 'delete'];
-$routes['/products/show'] = ['ProductController', 'show'];
+$routes['/products/edit/{productId}'] = ['ProductController', 'edit'];
+$routes['/products/update/{productId}'] = ['ProductController', 'update'];
+$routes['/products/delete/{productId}'] = ['ProductController', 'delete'];
+$routes['/products/show/{productId}'] = ['ProductController', 'show'];
 // Routes des catégories
 $routes['/categories'] = ['CategoryController', 'index'];
 $routes['/categories/create'] = ['CategoryController', 'create'];
@@ -48,15 +50,33 @@ $routes['/suppliers/show'] = ['SupplierController', 'show'];
 $routes['/clients'] = ['ClientController', 'index'];
 $routes['/clients/create'] = ['ClientController', 'create'];
 $routes['/clients/store'] = ['ClientController', 'store'];
-$routes['/clients/edit'] = ['ClientController', 'edit'];
-$routes['/clients/update'] = ['ClientController', 'update'];
-$routes['/clients/delete'] = ['ClientController', 'delete'];
-$routes['/clients/show'] = ['ClientController', 'show'];
+$routes['/clients/edit/{clientId}'] = ['ClientController', 'edit'];
+$routes['/clients/update/{clientId}'] = ['ClientController', 'update'];
+$routes['/clients/delete/{clientId}'] = ['ClientController', 'delete'];
+$routes['/clients/show/{clientId}'] = ['ClientController', 'show'];
 // Routes pour les commandes 
 $routes['/orders'] = ['OrderController', 'index'];
 $routes['/orders/create'] = ['OrderController', 'create'];
 $routes['/orders/store'] = ['OrderController', 'store'];
-$routes['/orders/edit'] = ['OrderController', 'edit'];
+$routes['/orders/edit/{orderId}'] = ['OrderController', 'edit'];
 $routes['/orders/update'] = ['OrderController', 'update'];
-$routes['/orders/delete'] = ['OrderController', 'delete'];
-$routes['/orders/show'] = ['OrderController', 'show'];
+$routes['/orders/delete/orderId}'] = ['OrderController', 'delete'];
+$routes['/orders/show/{orderId}'] = ['OrderController', 'show'];
+
+// Routes pour les entrées de stock
+$routes['/stock-entries'] = ['EntryController', 'index'];
+$routes['/entries/create'] = ['EntryController', 'create'];
+$routes['/entries/store'] = ['EntryController', 'store'];
+$routes['/entries/edit/{id}'] = ['EntryController', 'edit'];
+$routes['/entries/update/{id}'] = ['EntryController', 'update'];
+$routes['/entries/delete/{entryId}'] = ['EntryController', 'delete'];
+$routes['/entries/show/{entryId}'] = ['EntryController', 'show'];
+
+// Routes pour les sorties de stock
+$routes['/stock-exits'] = ['ExitController', 'index'];
+$routes['/exits/create'] = ['ExitController', 'create'];
+$routes['/exits/store'] = ['ExitController', 'store'];
+$routes['/exits/edit/{exitId}'] = ['ExitController', 'edit'];
+$routes['/exits/update/{exitId}'] = ['ExitController', 'update'];
+$routes['/exits/delete/{exitId}'] = ['ExitController', 'delete'];
+$routes['/exits/show/{exitId}'] = ['ExitController', 'show'];
