@@ -6,6 +6,7 @@ use App\Utils\Database;
 class Model {
     protected static $table;
     protected static $db;
+    protected static $where = [];
 
     public function __construct() {
         // Initialiser la connexion à la base de données
@@ -72,5 +73,41 @@ class Model {
         $table = static::$table;
         return self::$db->query("DELETE FROM {$table} WHERE id = ?", [$id]);
     }
+
+
+    public static function where($column, $operator, $value = null) {
+      if (func_num_args() == 2) {
+          $value = $operator;
+          $operator = '=';
+      }
+      self::$where[] = [$column, $operator, $value];
+      // dd(self::$where);
+      return new static();
+  }
+
+  public static function get() {
+      $table = static::$table;
+      $sql = "SELECT * FROM {$table}";
+      $values = [];
+      if (empty(self::$where)) {
+        // ... your existing code ...
+    }
+
+      if (!empty(self::$where)) {
+          $whereClauses = [];
+          foreach (self::$where as $clause) {
+              $whereClauses[] = "{$clause[0]} {$clause[1]} ?";
+              $values[] = $clause[2];
+          }
+          $sql .= " WHERE " . implode(' AND ', $whereClauses);
+      }
+      // dd([$sql, $values]);
+
+      self::$where = []; // Reset where clause
+
+      return self::$db->fetchAll($sql, $values);
+  }
+
+
 }
 

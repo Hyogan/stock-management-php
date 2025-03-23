@@ -15,8 +15,6 @@ Client Management:
 Basic client information storage
 Client listing
 What Remains to be Implemented:
-Order Management System:
-Complete order creation, modification, and deletion functionality
 Order approval workflow
 Solvency verification for clients
 Delivery Management:

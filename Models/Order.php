@@ -520,20 +520,6 @@ class Order extends Model {
         return $stats;
     }
 
-    public static function where(string $field, $value, ?string $orderByField = null, string $orderByDirection = 'ASC'): array
-    {
-        $db = Database::getInstance();
-        $sql = "SELECT * FROM commandes WHERE {$field} = ?";
-        $params = [$value];
-
-        if ($orderByField) {
-            $sql .= " ORDER BY " . $orderByField . " " . strtoupper($orderByDirection);
-        }
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
       /**
      * Fetches order items for a given order ID.
      *

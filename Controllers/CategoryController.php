@@ -49,14 +49,14 @@ class CategoryController extends Controller{
     // Affiche une seule catégorie
     public function show($id) {
         $this->checkAuth();
-        $category = Category::find($id);
+        $category = Category::getById($id);
 
         if (!$category) {
             $_SESSION['error'] = "Catégorie non trouvée.";
             $this->redirect('/categories');
         }
 
-        $this->view('category/show', ['category' => $category]);
+        $this->view('category/show', ['category' => $category],'admin');
     }
 
     // Affiche le formulaire de création
@@ -93,14 +93,14 @@ class CategoryController extends Controller{
     // Affiche le formulaire d'édition
     public function edit($id) {
         $this->checkAuth();
-        $category = Category::find($id);
+        $category = Category::getById($id);
 
-        if (!$category) {
+        if (!$category) { 
             $_SESSION['error'] = "Catégorie non trouvée.";
             $this->redirect('/categories');
         }
 
-        $this->view('category/edit', ['category' => $category]);
+        $this->view('category/edit', ['category' => $category],'admin');
     }
 
     // Met à jour une catégorie
@@ -109,20 +109,29 @@ class CategoryController extends Controller{
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name = trim(htmlspecialchars($_POST['name'] ?? ''));
+            $description = trim(htmlspecialchars($_POST['description'] ?? ''));
+            $statut = trim(htmlspecialchars($_POST['statut'] ?? ''));
 
             if (empty($name)) {
                 $_SESSION['error'] = "Le nom de la catégorie est requis.";
-                $this->redirect("/categories/$id/edit");
+                $this->redirect("/categories/edit/$id/");
             }
+            if (empty($description)) {
+              $_SESSION['error'] = "La description de la catégorie est requis.";
+              $this->redirect("/categories/edit/$id/");
+          }
 
-            $category = Category::find($id);
+            $category = Category::getById($id);
             if (!$category) {
                 $_SESSION['error'] = "Catégorie non trouvée.";
                 $this->redirect('/categories');
             }
+            $category['nom'] = $name;
+            $category['description'] = $description;
+            $category['statut'] = !empty($statut) ? $statut : 'actif'  ;
 
-            $category->setName($name);
-            $category->update();
+            Category::update($id,$category);
+            // $category->update();
 
             $_SESSION['success'] = "Catégorie mise à jour avec succès.";
             $this->redirect('/categories');
@@ -132,14 +141,14 @@ class CategoryController extends Controller{
     // Supprime une catégorie
     public function delete($id) {
         $this->checkAuth();
-        $category = Category::find($id);
+        $category = Category::getById($id);
 
         if (!$category) {
             $_SESSION['error'] = "Catégorie non trouvée.";
             $this->redirect('/categories');
         }
 
-        $category->delete();
+        Category::delete($category['id']);
         $_SESSION['success'] = "Catégorie supprimée avec succès.";
         $this->redirect('/categories');
     }

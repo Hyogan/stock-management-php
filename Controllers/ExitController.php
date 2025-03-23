@@ -4,6 +4,8 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Models\ExitOp;
 use App\Models\Product;
+use App\Models\Delivery;
+use App\Models\Order;
 use App\Utils\Auth;
 
 class ExitController extends Controller {
@@ -36,12 +38,20 @@ class ExitController extends Controller {
         Auth::checkAccess('any');
 
         $products = Product::getAll();
-
+        $deliveries = Delivery::where('statut','!=','annulee')->get();
+        $orders = Order::where('statut','!=','rejected')
+                          ->where('statut','!=','delivered')
+                          ->where('statut','!=','cancelled')
+                          ->get();
+                        // dd(count($orders));
+        
         $pageTitle = 'Ajouter une Sortie de Stock';
 
         $this->view('stock/exit/create', [
             'pageTitle' => $pageTitle,
             'products' => $products,
+            'orders' => $orders,
+            'deliveries' => $deliveries
         ], 'admin');
     }
 
@@ -52,7 +62,7 @@ class ExitController extends Controller {
         Auth::checkAccess('any');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('/exits');
+            $this->redirect('/stock-exits');
             exit;
         }
 
@@ -60,13 +70,19 @@ class ExitController extends Controller {
             'reference' => $_POST['reference'] ?? '',
             'type_sortie' => $_POST['type_sortie'] ?? '',
             'date_sortie' => $_POST['date_sortie'] ?? '',
-            'id_commande' => $_POST['id_commande'] ?? null,
-            'destination' => $_POST['destination'] ?? null,
+            'id_commande' => empty($_POST['id_commande']) ? null : $_POST['id_commande'],
+            'destination' => $_POST['destination'] ?? 'null',
             'montant_total' => $_POST['montant_total'] ?? '',
             'notes' => $_POST['notes'] ?? '',
             'id_utilisateur' => $_SESSION['user_id'],
-            'id_livraison' => $_POST['id_livraison'] ?? null,
+            'id_livraison' =>  empty($_POST['id_livraison']) ? null : $_POST['id_livraison'],
         ];
+        if(
+              $data['type_sortie'] == 'vente' && ($data['id_commande']  || $data['id_livraison'])) {
+              flash('error','Les champs livraison et commande ne peuvent pas etre vides pour une vente');
+              $this->redirect(url: '/exits/create');
+        }
+        // var_dump($data);
 
         $details = [];
         if (isset($_POST['details']) && is_array($_POST['details'])) {

@@ -239,12 +239,12 @@ class ClientController extends Controller {
     /**
      * Traiter la suppression d'un client
      */
-    public function delete($id) {
+    public function delete($clientId) {
         // Vérifier les droits d'accès
         if(!$this->authController->isLoggedIn()){
           return $this->view('login');
         }
-        $client = Client::getById($id);
+        $client = Client::getById($clientId);
         // Vérifier si le client existe
         if (!$client) {
             $_SESSION['error'] = 'Le client n\'existe pas';
@@ -253,7 +253,7 @@ class ClientController extends Controller {
         }
         
         // Supprimer le client
-        Client::delete($id);
+        Client::delete($clientId);
         
         // Rediriger vers la liste des clients
         $_SESSION['success'] = 'Le client a été supprimé avec succès';

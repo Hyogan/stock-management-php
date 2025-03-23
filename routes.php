@@ -35,17 +35,18 @@ $routes['/products/show/{productId}'] = ['ProductController', 'show'];
 $routes['/categories'] = ['CategoryController', 'index'];
 $routes['/categories/create'] = ['CategoryController', 'create'];
 $routes['/categories/store'] = ['CategoryController', 'store'];
-$routes['/categories/edit'] = ['CategoryController', 'edit'];
-$routes['/categories/update'] = ['CategoryController', 'update'];
-$routes['/categories/delete'] = ['CategoryController', 'delete'];
+$routes['/categories/edit/{id}'] = ['CategoryController', 'edit'];
+$routes['/categories/update/{id}'] = ['CategoryController', 'update'];
+$routes['/categories/delete/{id}'] = ['CategoryController', 'delete'];
 // Routes des fournisseurs
 $routes['/suppliers'] = ['SupplierController', 'index'];
 $routes['/suppliers/create'] = ['SupplierController', 'create'];
 $routes['/suppliers/store'] = ['SupplierController', 'store'];
-$routes['/suppliers/edit'] = ['SupplierController', 'edit'];
-$routes['/suppliers/update'] = ['SupplierController', 'update'];
-$routes['/suppliers/delete'] = ['SupplierController', 'delete'];
-$routes['/suppliers/show'] = ['SupplierController', 'show'];
+$routes['/suppliers/change-status/{id}'] = ['SupplierController', 'changeStatus'];
+$routes['/suppliers/edit/{id}'] = ['SupplierController', 'edit'];
+$routes['/suppliers/update/{id}'] = ['SupplierController', 'update'];
+$routes['/suppliers/delete/{id}'] = ['SupplierController', 'delete'];
+$routes['/suppliers/show/{id}'] = ['SupplierController', 'show'];
 // Routes pour les clients 
 $routes['/clients'] = ['ClientController', 'index'];
 $routes['/clients/create'] = ['ClientController', 'create'];

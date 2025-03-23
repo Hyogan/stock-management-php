@@ -91,15 +91,13 @@ class SupplierController extends Controller{
             header('Location: /suppliers');
             exit;
         }
-        
-        return [
-            'view' => 'suppliers/form',
-            'data' => [
-                'title' => 'Modifier un fournisseur',
-                'action' => 'update',
-                'supplier' => $supplier
-            ]
-        ];
+        $this->view('suppliers/edit',
+                    [
+                      'title' => 'Modifier un fournisseur',
+                      'action' => 'update',
+                      'supplier' => $supplier
+                    ],
+                    'admin');
     }
     
     /**
@@ -155,21 +153,18 @@ class SupplierController extends Controller{
         
         if (!$supplier) {
             Session::set('error', 'Fournisseur non trouvé');
-            header('Location: /suppliers');
-            exit;
+            $this->redirect('/suppliers');
+            // exit;
         }
         
         // Récupérer les produits du fournisseur
         $products = Supplier::getProducts($id);
-        
-        return [
-            'view' => 'suppliers/show',
-            'data' => [
-                'title' => 'Détails du fournisseur',
-                'supplier' => $supplier,
-                'products' => $products
-            ]
-        ];
+        return $this->view('suppliers/show', [
+                            'title' => 'Détails du fournisseur',
+                            'supplier' => $supplier,
+                            'products' => $products
+                        ],
+                        'admin');
     }
     
     /**
@@ -177,7 +172,6 @@ class SupplierController extends Controller{
      */
     public function delete($id) {
         $supplier = Supplier::getById($id);
-        
         if (!$supplier) {
             Session::set('error', 'Fournisseur non trouvé');
             header('Location: /suppliers');

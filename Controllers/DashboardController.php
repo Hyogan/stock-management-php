@@ -43,7 +43,7 @@ class DashboardController extends Controller
     {
         // Fetch data for the director's dashboard
         $products = Product::getAll(); // Example: Fetch all products
-        $orders = Order::where('statut', 'pending'); // Example: Fetch pending orders
+        $orders = Order::where('statut', '=','pending')->get(); // Example: Fetch pending orders
         $users = User::getAll();
         $stats = [
           'users' => count($users),
@@ -64,7 +64,7 @@ class DashboardController extends Controller
     private function secretaryDashboard()
     {
         // Fetch data for the secretary's dashboard
-        $orders = Order::where('statut', 'pending');// Example: Fetch pending orders
+        $orders = Order::where('statut', '=','pending');// Example: Fetch pending orders
         $orders = Order::getAll();
         $deliveries = Delivery::getAll(); // Example: Fetch recent deliveries
         $clients = Client::getAll(); 
@@ -86,7 +86,7 @@ class DashboardController extends Controller
         $products = Product::getAll(); // Example: Fetch all products
         $entries = Entry::getAll(); // Example: Fetch recent entries
         $exits = ExitOp::getAll(); // example fetch recent exits.
-        $orders = Order::where('statut', 'en_attente');
+        $orders = Order::where('statut', '','en_attente');
 
         // Load the storekeeper dashboard view
         // var_dump($products);

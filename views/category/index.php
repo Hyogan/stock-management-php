@@ -33,11 +33,11 @@
                 <tr>
                     <td><?= $category['id']; ?></td>
                     <td><?= htmlspecialchars($category['nom']); ?></td>
-                    <td><?= htmlspecialchars($category['description']); ?></td>
+                    <td><?= htmlspecialchars($category['description']);  ?></td>
                     <td><?= htmlspecialchars($category['statut']); ?></td>
                     <td>
-                        <a href="/categories/<?= $category['id']; ?>/edit" class="btn btn-warning btn-sm">Modifier</a>
-                        <a href="/categories/<?= $category['id']; ?>/delete" onclick="return confirm('Confirmer la suppression ?');" class="btn btn-danger btn-sm">Supprimer</a>
+                        <a href="/categories/edit/<?= $category['id']; ?>" class="btn btn-warning btn-sm">Modifier</a>
+                        <a href="/categories/delete/<?= $category['id']; ?>" onclick="return confirm('Confirmer la suppression ?');" class="btn btn-danger btn-sm">Supprimer</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

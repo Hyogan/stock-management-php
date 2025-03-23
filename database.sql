@@ -283,6 +283,10 @@ ALTER TABLE utilisateurs
 ADD COLUMN remember_token VARCHAR(255) NULL,
 ADD COLUMN remember_token_expiry DATETIME NULL;
 
+ALTER TABLE `sorties_stock`
+MODIFY COLUMN `id_livraison` int(11) DEFAULT NULL;
+ALTER TABLE `sorties_stock`
+MODIFY COLUMN `id_commande` int(11) DEFAULT NULL;
 
 -- Insertion d'un utilisateur administrateur par défaut
 -- Mot de passe: admin123 (à changer après la première connexion)

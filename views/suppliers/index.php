@@ -31,7 +31,7 @@
                                 <td><?= htmlspecialchars($supplier['telephone'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($supplier['email'] ?? '-') ?></td>
                                 <td>
-                                    <span class="badge badge-<?= $supplier['statut'] === 'actif' ? 'success' : 'danger' ?>">
+                                    <span class="badge bg-<?= $supplier['statut'] === 'actif' ? 'success' : 'danger' ?>">
                                         <?= ucfirst($supplier['statut']) ?>
                                     </span>
                                 </td>
@@ -63,7 +63,7 @@
 </div>
 
 <!-- Modal de confirmation de suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -85,24 +85,25 @@
 
 <script>
     $(document).ready(function() {
-        $('#suppliers-table').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true,
-            "language": {
-                "url": "/assets/plugins/datatables/fr-FR.json"
-            }
-        });
+        // $('#suppliers-table').DataTable({
+        //     "paging": true,
+        //     "lengthChange": true,
+        //     "searching": true,
+        //     "ordering": true,
+        //     "info": true,
+        //     "autoWidth": false,
+        //     "responsive": true,
+        //     "language": {
+        //         "url": "/assets/plugins/datatables/fr-FR.json"
+        //     }
+        // });
         
         $('.delete-btn').click(function() {
             var id = $(this).data('id');
             var name = $(this).data('name');
             $('#supplier-name').text(name);
             $('#confirm-delete').attr('href', '/suppliers/delete/' + id);
+            $('#deleteModal').modal('show');
         });
     });
 </script>

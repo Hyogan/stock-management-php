@@ -24,9 +24,16 @@
 
         <div class="mb-3">
             <label for="id_commande" class="form-label">ID Commande (Optionnel)</label>
-            <input type="number" class="form-control" id="id_commande" name="id_commande">
+            <!-- <input type="number" class="form-control" id="id_commande" name="id_commande"> -->
+            <select class="form-control" id="id_commande" name="id_commande">
+              <option value="">Sélectionner une commande existante</option>
+                <?php foreach ($orders as $order): ?>
+                    <option value="<?= $order['id'] ?>"?>
+                        <?= htmlspecialchars($order['reference']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
-
         <div class="mb-3">
             <label for="destination" class="form-label">Destination (Optionnel)</label>
             <input type="text" class="form-control" id="destination" name="destination">
@@ -41,10 +48,17 @@
             <label for="notes" class="form-label">Notes</label>
             <textarea class="form-control" id="notes" name="notes"></textarea>
         </div>
-
         <div class="mb-3">
             <label for="id_livraison" class="form-label">ID Livraison (Optionnel)</label>
-            <input type="number" class="form-control" id="id_livraison" name="id_livraison">
+            <!-- <input type="number" class="form-control" id="id_livraison" name="id_livraison"> -->
+            <select class="form-control" id="id_livraison" name="id_livraison">
+              <option value="">Sélectionner ID Livraison (Optionnel)</option>
+                <?php foreach ($deliveries as $delivery): ?>
+                    <option value="<?= $delivery['id'] ?>"?>
+                        <?= htmlspecialchars($delivery['reference']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
 
         <div class="mb-3">

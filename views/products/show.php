@@ -117,9 +117,9 @@
                 <div class="mb-4">
                     <h5>Statut</h5>
                     <?php if ($product['statut'] == 'actif'): ?>
-                        <p><span class="badge badge-success">Actif</span></p>
+                        <p><span class="badge bg-success">Actif</span></p>
                     <?php else: ?>
-                        <p><span class="badge badge-danger">Inactif</span></p>
+                        <p><span class="badge bg-danger">Inactif</span></p>
                     <?php endif; ?>
                 </div>
                 
@@ -175,10 +175,10 @@
                             <tr>
                                 <td><?= date('d/m/Y H:i', strtotime($movement['date_operation'])) ?></td>
                                 <td>
-                                    <?php if ($movement['type_operation'] == 'entree'): ?>
-                                        <span class="badge badge-success">Entrée</span>
+                                    <?php if ($movement['type_operation'] == 'entry'): ?>
+                                        <span class="badge bg-success">Entrée</span>
                                     <?php else: ?>
-                                        <span class="badge badge-danger">Sortie</span>
+                                        <span class="badge bg-danger">Sortie</span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?= $movement['quantite'] ?></td>

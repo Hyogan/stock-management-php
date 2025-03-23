@@ -234,6 +234,7 @@ class ProductController extends Controller{
       // Définir le titre de la page
       $pageTitle = 'Détails du produit: ' . $product['designation'];
       // Afficher la vue
+      // dd($stockMovements);
       $this->view('products/show', [
           'pageTitle' => $pageTitle,
           'product' => $product,
