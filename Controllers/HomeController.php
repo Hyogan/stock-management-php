@@ -8,7 +8,7 @@ class HomeController extends Controller
     public function index()
     {
         // Logique pour la page d'accueil
-        return $this->view('home',[],'default');
+        return $this->view('/auth/login',[],'default');
     }
     
     // Ajoutez d'autres méthodes selon vos besoins

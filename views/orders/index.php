@@ -88,7 +88,7 @@
                                     <td><?= htmlspecialchars($order['reference']) ?></td>
                                     <td><?= htmlspecialchars($order['client_nom'] . ' ' . $order['client_prenom']) ?></td>
                                     <td><?= date('d/m/Y H:i', strtotime($order['date_creation'])) ?></td>
-                                    <td><?= number_format($order['montant_total'], 2, ',', ' ') ?> €</td>
+                                    <td><?= number_format($order['montant_total'], 2, ',', ' ') ?> fcfa</td>
                                     <td>
                                         <?php
                                         $statusClass = '';

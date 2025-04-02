@@ -4,7 +4,7 @@ namespace App\Core;
 use App\Utils\Database;
 
 class Model {
-    protected static $table;
+    protected static $table;  
     protected static $db;
     protected static $where = [];
 

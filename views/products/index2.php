@@ -98,7 +98,7 @@
                                 <td><?= htmlspecialchars($product['reference']) ?></td>
                                 <td><?= htmlspecialchars($product['designation']) ?></td>
                                 <td><?= htmlspecialchars($product['categorie_nom'] ?? 'Non catégorisé') ?></td>
-                                <td><?= number_format($product['prix_ht'], 2, ',', ' ') ?> €</td>
+                                <td><?= number_format($product['prix_ht'], 2, ',', ' ') ?> fcfa</td>
                                 <td class="<?= ($product['stock_actuel'] <= $product['stock_minimum']) ? 'text-danger font-weight-bold' : '' ?>">
                                     <?= $product['stock_actuel'] ?>
                                     <?php if ($product['stock_actuel'] <= $product['stock_minimum']): ?>

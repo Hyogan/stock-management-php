@@ -91,7 +91,7 @@
                                 <input type="number" class="form-control" id="prix_achat" name="prix_achat" step="0.01" min="0"
                                        value="<?= isset($_POST['prix_achat']) ? htmlspecialchars($_POST['prix_achat']) : '' ?>">
                                 <div class="input-group-append">
-                                    <span class="input-group-text">€</span>
+                                    <span class="input-group-text">fcfa</span>
                                 </div>
                             </div>
                             <?php if (isset($errors['prix_achat'])): ?>
@@ -105,7 +105,7 @@
                                 <input type="number" class="form-control" id="prix_vente" name="prix_vente" step="0.01" min="0" required
                                        value="<?= isset($_POST['prix_vente']) ? htmlspecialchars($_POST['prix_vente']) : '' ?>">
                                 <div class="input-group-append">
-                                    <span class="input-group-text">€</span>
+                                    <span class="input-group-text">fcfa</span>
                                 </div>
                             </div>
                             <?php if (isset($errors['prix_vente'])): ?>

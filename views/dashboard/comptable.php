@@ -27,7 +27,7 @@ ob_start();
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Chiffre d'affaires (mois)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['monthly_revenue'] ?? 0, 2, ',', ' ') ?> €</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['monthly_revenue'] ?? 0, 2, ',', ' ') ?> fcfa</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-calendar fa-2x text-gray-300"></i>
@@ -45,7 +45,7 @@ ob_start();
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                 Factures impayées</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['unpaid_amount'] ?? 0, 2, ',', ' ') ?> €</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['unpaid_amount'] ?? 0, 2, ',', ' ') ?> fcfa</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
@@ -63,7 +63,7 @@ ob_start();
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Paiements reçus (mois)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['monthly_payments'] ?? 0, 2, ',', ' ') ?> €</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['monthly_payments'] ?? 0, 2, ',', ' ') ?> fcfa</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-euro-sign fa-2x text-gray-300"></i>
@@ -129,7 +129,7 @@ ob_start();
                                         <td><?= $invoice['numero'] ?></td>
                                         <td><?= htmlspecialchars($invoice['client_nom']) ?></td>
                                         <td><?= date('d/m/Y', strtotime($invoice['date_emission'])) ?></td>
-                                        <td><?= number_format($invoice['montant_total'], 2, ',', ' ') ?> €</td>
+                                        <td><?= number_format($invoice['montant_total'], 2, ',', ' ') ?> fcfa</td>
                                         <td>
                                             <a href="/invoices/view/<?= $invoice['id'] ?>" class="btn btn-info btn-sm">
                                                 <i class="fas fa-eye"></i>
@@ -188,7 +188,7 @@ ob_start();
                                         <td><?= date('d/m/Y', strtotime($payment['date_paiement'])) ?></td>
                                         <td><?= $payment['facture_numero'] ?></td>
                                         <td><?= htmlspecialchars($payment['client_nom']) ?></td>
-                                        <td><?= number_format($payment['montant'], 2, ',', ' ') ?> €</td>
+                                        <td><?= number_format($payment['montant'], 2, ',', ' ') ?> fcfa</td>
                                         <td>
                                             <?php 
                                             $badgeClass = 'badge-secondary';
@@ -246,7 +246,7 @@ ob_start();
                                                 <div class="text-xs font-weight-bold text-uppercase mb-1">
                                                     <?= ucfirst($statut) ?></div>
                                                 <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $data['total'] ?> factures</div>
-                                                <div class="small text-gray-600"><?= number_format($data['montant'], 2, ',', ' ') ?> €</div>
+                                                <div class="small text-gray-600"><?= number_format($data['montant'], 2, ',', ' ') ?> fcfa</div>
                                             </div>
                                         </div>
                                     </div>
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         maxTicksLimit: 5,
                         padding: 10,
                         callback: function(value, index, values) {
-                            return value + ' €';
+                            return value + ' fcfa';
                         }
                     },
                     gridLines: {
@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 callbacks: {
                     label: function(tooltipItem, chart) {
                         var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
-                        return datasetLabel + ': ' + tooltipItem.yLabel + ' €';
+                        return datasetLabel + ': ' + tooltipItem.yLabel + ' fcfa';
                     }
                 }
             }

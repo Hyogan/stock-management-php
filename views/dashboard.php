@@ -37,7 +37,7 @@ ob_start();
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                             Revenus</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['total_revenue'] ?? 0, 2, ',', ' ') ?> €</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?= number_format($stats['total_revenue'] ?? 0, 2, ',', ' ') ?> fcfa</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-euro-sign fa-2x text-gray-300"></i>
@@ -137,7 +137,7 @@ ob_start();
                                         <td><?= $order['id'] ?></td>
                                         <td><?= htmlspecialchars($order['client_name']) ?></td>
                                         <td><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></td>
-                                        <td><?= number_format($order['montant'], 2, ',', ' ') ?> €</td>
+                                        <td><?= number_format($order['montant'], 2, ',', ' ') ?> fcfa</td>
                                         <td>
                                             <span class="badge bg-<?= $order['statut'] === 'completed' ? 'success' : ($order['statut'] === 'pending' ? 'warning' : 'secondary') ?>">
                                                 <?= ucfirst($order['statut']) ?>

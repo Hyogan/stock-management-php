@@ -26,7 +26,7 @@ class Entry extends Operation {
             $sql .= " LIMIT ?";
             return $db->fetchAll($sql, [$limit]);
         }
-        return $db->fetchAll($sql);
+        return $db->fetchAll(sql: $sql);
     }
 
     /**

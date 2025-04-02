@@ -8,7 +8,6 @@
             <div class="card shadow-lg border-0 rounded-lg">
                 <div class="card-body p-5">
                     <h2 class="text-center mb-4">Connexion</h2>
-
                     <?php if (isset($error)): ?>
                         <div class="alert alert-danger">
                             <?php echo $error; ?>

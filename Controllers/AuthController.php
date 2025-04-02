@@ -134,7 +134,6 @@ class AuthController extends Controller{
         if (Auth::isLoggedIn()) {
             $this->redirect('/dashboard');
         }
-        
         // Vérifier si le formulaire a été soumis
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $email = $_POST['email'] ?? '';

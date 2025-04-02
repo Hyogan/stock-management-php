@@ -7,13 +7,13 @@
         <div class="card-body">
             <p><strong>Type de Sortie:</strong> <?= htmlspecialchars($exit['type_sortie']) ?></p>
             <p><strong>Date de sortie:</strong> <?= htmlspecialchars($exit['date_sortie']) ?></p>
-            <p><strong>Montant Total:</strong> <?= htmlspecialchars($exit['montant_total']) ?> €</p>
+            <p><strong>Montant Total:</strong> <?= htmlspecialchars($exit['montant_total']) ?> fcfa</p>
             <p><strong>Statut:</strong> <?= htmlspecialchars($exit['statut']) ?></p>
             <p><strong>Notes:</strong> <?= htmlspecialchars($exit['notes']) ?></p>
             <h4>Détails des Produits</h4>
             <ul>
                 <?php foreach ($exit['details'] as $detail): ?>
-                    <li><?= htmlspecialchars($detail['produit_nom']) ?> - Quantité: <?= htmlspecialchars($detail['quantite']) ?> - Prix Unitaire: <?= htmlspecialchars($detail['prix_unitaire']) ?> €</li>
+                    <li><?= htmlspecialchars($detail['produit_nom']) ?> - Quantité: <?= htmlspecialchars($detail['quantite']) ?> - Prix Unitaire: <?= htmlspecialchars($detail['prix_unitaire']) ?> fcfa</li>
                 <?php endforeach; ?>
             </ul>
         </div>

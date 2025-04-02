@@ -59,11 +59,11 @@
                         <div class="row mt-3">
                             <div class="col-6">
                                 <h5>Prix d'achat</h5>
-                                <p class="h4"><?= number_format($product['prix_achat'], 2, ',', ' ') ?> €</p>
+                                <p class="h4"><?= number_format($product['prix_achat'], 2, ',', ' ') ?> fcfa</p>
                             </div>
                             <div class="col-6">
                                 <h5>Prix de vente</h5>
-                                <p class="h4 text-primary"><?= number_format($product['prix_vente'], 2, ',', ' ') ?> €</p>
+                                <p class="h4 text-primary"><?= number_format($product['prix_vente'], 2, ',', ' ') ?> fcfa</p>
                             </div>
                         </div>
                         

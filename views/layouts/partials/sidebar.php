@@ -29,12 +29,14 @@
                 </a>
             </li>
             
-            <li class="nav-item">
-                <a class="nav-link <?= $currentPage === 'clients' ? 'active' : '' ?>" href="<?= APP_URL ?>/clients">
-                    <i class="fas fa-users me-2"></i>
-                    Clients
-                </a>
-            </li>
+        <?php if($_SESSION['user_role'] != 'magasinier') :?>
+              <li class="nav-item">
+              <a class="nav-link <?= $currentPage === 'clients' ? 'active' : '' ; ?>" href="<?= APP_URL ?>/clients">
+                  <i class="fas fa-users me-2"></i>
+                  Clients
+              </a>
+          </li>
+          <?php endif; ?>
             
             <li class="nav-item">
                 <a class="nav-link <?= $currentPage === 'orders' ? 'active' : '' ?>" href="<?= APP_URL ?>/orders">

@@ -177,8 +177,7 @@ class OrderController extends Controller {
         if (!$order) {
             $_SESSION['error'] = "Commande non trouvée.";
             $this->redirect('/orders');
-        }
-        
+        }  
         // Vérifier si la commande peut être modifiée
         if ($order['statut'] != 'pending') {
             $_SESSION['error'] = "Seules les commandes en attente peuvent être modifiées.";
@@ -193,6 +192,13 @@ class OrderController extends Controller {
         
         // Récupérer la liste des produits disponibles
         $products = Product::getActive();
+
+        // dd([
+        //   'order' => $order,
+        //   'orderDetails' => $orderDetails,
+        //   'clients' => $clients,
+        //   'products' => $products
+        // ]);
         
         $this->view('orders/edit', [
             'order' => $order,
@@ -331,7 +337,7 @@ class OrderController extends Controller {
         // Check if user has permission
         if (!Auth::isAdmin()) {
             $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'effectuer cette action.";
-            redirect('/orders');
+           return $this->redirect('/orders');
         }
         $data = [
           'statut' => 'approved' 
@@ -342,7 +348,7 @@ class OrderController extends Controller {
             $_SESSION['error_message'] = 'Une erreur est survenue lors de l\'approbation de la commande';
         }
         
-        redirect('/orders/show/' . $id);
+        return $this->redirect('/orders/show/' . $id);
     }
 
     // Ajouter un paiement à une commande
@@ -761,7 +767,7 @@ public function generateDeliveryNote($id)
         // Check if user has permission
         if (!Auth::isAdmin() && !Auth::isSecretary()) {
             $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'effectuer cette action.";
-            redirect('/orders');
+            return $this->redirect('/orders');
         }
         
         $order = Order::getById($id);
@@ -769,7 +775,7 @@ public function generateDeliveryNote($id)
         // Check if order is approved
         if ($order['status'] !== 'approved') {
             $_SESSION['error_message'] = 'Seules les commandes approuvées peuvent générer un bon de livraison';
-            redirect('/orders/show/' . $id);
+            return $this->redirect('/orders/show/' . $id);
         }
         
         // Generate delivery note
@@ -778,10 +784,10 @@ public function generateDeliveryNote($id)
         
         if ($deliveryId) {
             $_SESSION['success_message'] = 'Bon de livraison généré avec succès';
-            redirect('/deliveries/show/' . $deliveryId);
+            return $this->redirect('/deliveries/show/' . $deliveryId);
         } else {
             $_SESSION['error_message'] = 'Une erreur est survenue lors de la génération du bon de livraison';
-            redirect('/orders/show/' . $id);
+            return $this->redirect('/orders/show/' . $id);
         }
     }
     

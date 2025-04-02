@@ -114,7 +114,7 @@ ob_start();
                                         <td><?= $order['id'] ?></td>
                                         <td><?= date('d/m/Y', strtotime($order['created_at'])) ?></td>
                                         <td><?= htmlspecialchars($order['client_name']) ?></td>
-                                        <td><?= number_format($order['total_amount'], 2, ',', ' ') ?> €</td>
+                                        <td><?= number_format($order['total_amount'], 2, ',', ' ') ?> fcfa</td>
                                         <td>
                                             <a href="/orders/view/<?= $order['id'] ?>" class="btn btn-info btn-sm">
                                                 <i class="fas fa-eye"></i>

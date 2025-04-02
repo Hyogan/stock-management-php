@@ -84,7 +84,7 @@
                                     <td><?= $product['id'] ?></td>
                                     <td><?= htmlspecialchars($product['designation']) ?></td>
                                     <td><?= htmlspecialchars($product['categorie_nom'] ?? '-') ?></td>
-                                    <td><?= number_format($product['prix_vente'], 2, ',', ' ') ?> €</td>
+                                    <td><?= number_format($product['prix_vente'], 2, ',', ' ') ?> fcfa</td>
                                     <td>
                                         <span class="badge badge-<?= $product['quantite_stock'] > 0 ? 'success' : 'danger' ?>">
                                             <?= $product['quantite_stock'] ?>
