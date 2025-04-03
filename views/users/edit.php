@@ -64,9 +64,9 @@
                     <label for="type">Type d'utilisateur <span class="text-danger">*</span></label>
                     <select class="form-control" id="type" name="type" required>
                         <option value="">Sélectionner un type</option>
-                        <option value="admin" <?= ($user['type'] == 'admin') ? 'selected' : '' ?>>Administrateur</option>
-                        <option value="storekeeper" <?= ($user['type'] == 'storekeeper') ? 'selected' : '' ?>>Magasinier</option>
-                        <option value="secretary" <?= ($user['type'] == 'secretary') ? 'selected' : '' ?>>Secrétaire</option>
+                        <option value="admin" <?= ($user['role'] == 'admin') ? 'selected' : '' ?>>Administrateur</option>
+                        <option value="storekeeper" <?= ($user['role'] == 'storekeeper') ? 'selected' : '' ?>>Magasinier</option>
+                        <option value="secretary" <?= ($user['role'] == 'secretary') ? 'selected' : '' ?>>Secrétaire</option>
                     </select>
                 </div>
 

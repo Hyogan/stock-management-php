@@ -31,7 +31,7 @@ class ClientController extends Controller {
         $pageTitle = 'Gestion des Clients';
         $actionButtons = '
             <a href="' . APP_URL . '/clients/create" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Ajouter un client
+                <i class="fas fa-plus"></i> Ajouter un client
             </a>
         ';
         // var_dump($clients);
@@ -282,7 +282,7 @@ class ClientController extends Controller {
         // Définir les boutons d'action
         $actionButtons = '
             <a href="' . APP_URL . '/clients/create" class="btn btn-primary">
-                <i class="bi bi-plus"></i> Ajouter un client
+                <i class="fas fa-plus"></i> Ajouter un client
             </a>
         ';
 

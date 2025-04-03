@@ -181,18 +181,18 @@
                                     </td>
                                     <td>
                                         <a href="<?= APP_URL ?>/products/show/<?= $product['id'] ?>" class="btn btn-info btn-sm">
-                                            <i class="bi bi-eye"></i> voir
+                                            <i class="fas fa-eye"></i> voir
                                         </a>
                                         <?php if ($authController->isAdmin() || $authController->isStorekeeper()): ?>
                                             <a href="<?= APP_URL ?>/products/edit/<?= $product['id'] ?>" class="btn btn-primary btn-sm">
-                                                <i class="bi bi-pencil"></i>Edit
+                                                <i class="fas fa-pencil"></i>Edit
                                             </a>
                                             <!-- <a href="<?= APP_URL ?>/operations/create?product_id=<?= $product['id'] ?>" class="btn btn-warning btn-sm">
-                                                <i class="bi bi-box-arrow-in-down"></i> creer une e
+                                                <i class="fas fa-box-arrow-in-down"></i> creer une e
                                             </a> -->
                                             <?php if ($authController->isAdmin()): ?>
                                                 <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $product['id'] ?>">
-                                                    <i class="bi bi-trash"></i>
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                                 <!-- Modal de confirmation de suppression -->
                                                 <div class="modal fade" id="deleteModal<?= $product['id'] ?>" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel<?= $product['id'] ?>" aria-hidden="true">

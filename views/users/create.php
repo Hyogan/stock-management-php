@@ -4,12 +4,14 @@
             <h6 class="m-0 font-weight-bold text-primary">Ajouter un Utilisateur</h6>
         </div>
         <div class="card-body">
-            <?php if (isset($error)): ?>
+            <?php if (isset($errors)): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= $error ?>
+                <?php foreach ($errors as $error): ?>
+                  <?= $error ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
+                  <?php endforeach ?>
                 </div>
             <?php endif; ?>
 
@@ -61,11 +63,11 @@
 
                 <div class="form-group">
                     <label for="type">Type d'utilisateur <span class="text-danger">*</span></label>
-                    <select class="form-control" id="type" name="type" required>
+                    <select class="form-control" id="role" name="role" required>
                         <option value="">Sélectionner un type</option>
-                        <option value="admin" <?= (isset($_POST['type']) && $_POST['type'] == 'admin') ? 'selected' : '' ?>>Administrateur</option>
-                        <option value="storekeeper" <?= (isset($_POST['type']) && $_POST['type'] == 'storekeeper') ? 'selected' : '' ?>>Magasinier</option>
-                        <option value="secretary" <?= (isset($_POST['type']) && $_POST['type'] == 'secretary') ? 'selected' : '' ?>>Secrétaire</option>
+                        <option value="admin" <?= (isset($_POST['role']) && $_POST['role'] == 'admin') ? 'selected' : '' ?>>Administrateur</option>
+                        <option value="magasinier" <?= (isset($_POST['role']) && $_POST['role'] == 'magasinier') ? 'selected' : '' ?>>Magasinier</option>
+                        <option value="secretaire" <?= (isset($_POST['role']) && $_POST['role'] == 'secretaire') ? 'selected' : '' ?>>Secrétaire</option>
                     </select>
                 </div>
 

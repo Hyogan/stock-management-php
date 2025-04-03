@@ -59,12 +59,12 @@
                 </a>
             </li>
             
-            <li class="nav-item">
+            <!-- <li class="nav-item">
                 <a class="nav-link <?= $currentPage === 'payments' ? 'active' : '' ?>" href="<?= APP_URL ?>/payments">
                     <i class="fas fa-money-bill-wave me-2"></i>
                     Paiements
                 </a>
-            </li>
+            </li> -->
             
             <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
             <li class="nav-item">
@@ -88,9 +88,15 @@
                 </a>
             </li>
             <?php endif; ?>
+            <li class="nav-item">
+                <a class="nav-link" href="<?= APP_URL ?>/auth/logout">
+                    <i class="fas fa-sign-out"></i>
+                   Deconnexion
+                </a>
+            </li>
         </ul>
         
-        <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+        <!-- <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
             <span>Administration</span>
         </h6>
@@ -108,6 +114,6 @@
                 </a>
             </li>
         </ul>
-        <?php endif; ?>
+        <?php endif; ?> -->
     </div>
 </nav>

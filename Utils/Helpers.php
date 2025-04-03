@@ -6,6 +6,7 @@
 /**
  * Échapper les données pour éviter les attaques XSS
  */
+
 function escape($data) {
     return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
 }

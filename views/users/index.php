@@ -3,8 +3,8 @@
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Liste des Utilisateurs</h6>
             <div class="dropdown no-arrow">
-                <a href="<?= APP_URL ?>/users/add" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-circle"></i> Ajouter un utilisateur
+                <a href="<?= APP_URL ?>/users/create" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus-circle"></i> Ajouter un utilisateur
                 </a>
             </div>
         </div>
@@ -36,7 +36,7 @@
                             <th>ID</th>
                             <th>Nom</th>
                             <th>Email</th>
-                            <th>Nom d'utilisateur</th>
+                            <!-- <th>Nom d'utilisateur</th> -->
                             <th>Type</th>
                             <th>Dernière connexion</th>
                             <th>Actions</th>
@@ -53,15 +53,15 @@
                                     <td><?= $user['id'] ?></td>
                                     <td><?= htmlspecialchars($user['nom'] . ' ' . $user['prenom']) ?></td>
                                     <td><?= htmlspecialchars($user['email']) ?></td>
-                                    <td><?= htmlspecialchars($user['username']) ?></td>
+                                    <!-- <td><?= htmlspecialchars($user['username']) ?></td> -->
                                     <td>
                                         <?php
                                             $typeLabels = [
-                                                'admin' => '<span class="badge badge-danger">Administrateur</span>',
-                                                'storekeeper' => '<span class="badge badge-primary">Magasinier</span>',
-                                                'secretary' => '<span class="badge badge-info">Secrétaire</span>'
+                                                'admin' => '<span class="badge bg-danger">Administrateur</span>',
+                                                'magasinier' => '<span class="badge bg-primary">Magasinier</span>',
+                                                'secretaire' => '<span class="badge bg-info">Secrétaire</span>'
                                             ];
-                                            echo $typeLabels[$user['type']] ?? $user['type'];
+                                            echo $typeLabels[$user['role']] ?? $user['role'];
                                         ?>
                                     </td>
                                     <td>
@@ -69,11 +69,11 @@
                                     </td>
                                     <td>
                                         <a href="<?= APP_URL ?>/users/edit/<?= $user['id'] ?>" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-pencil"></i>
+                                            <i class="fas fa-pencil"></i>
                                         </a>
                                         <?php if ($user['id'] != $_SESSION['user_id']): ?>
                                             <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $user['id'] ?>">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                             <!-- Modal de confirmation de suppression -->
                                             <div class="modal fade" id="deleteModal<?= $user['id'] ?>" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel<?= $user['id'] ?>" aria-hidden="true">

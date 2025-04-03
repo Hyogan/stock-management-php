@@ -1,7 +1,7 @@
 <?php
 $stylesheet = "/assets/css/admin.css";
 $header = BASE_PATH . "/views/layouts/partials/admin.php";
-$footer = BASE_PATH . "/views/layouts/partials/footer.php";
+// $footer = BASE_PATH . "/views/layouts/partials/footer.php";
 
 ob_start(); ?>
 <div class="admin-container" style="min-height: 100vh; display: flex; flex-direction: column;">

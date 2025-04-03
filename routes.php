@@ -81,3 +81,14 @@ $routes['/exits/edit/{exitId}'] = ['ExitController', 'edit'];
 $routes['/exits/update/{exitId}'] = ['ExitController', 'update'];
 $routes['/exits/delete/{exitId}'] = ['ExitController', 'delete'];
 $routes['/exits/show/{exitId}'] = ['ExitController', 'show'];
+
+
+// Routes des utilisateurs (admin seulement)
+$routes['/users'] = ['UserController', 'index'];
+$routes['/users/create'] = ['UserController', 'create'];
+$routes['/users/store'] = ['UserController', 'store'];
+$routes['/users/edit'] = ['UserController', 'edit'];
+$routes['/users/update'] = ['UserController', 'update'];
+$routes['/users/delete'] = ['UserController', 'delete'];
+$routes['/users/show'] = ['UserController', 'show'];
+

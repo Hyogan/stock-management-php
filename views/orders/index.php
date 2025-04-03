@@ -55,12 +55,12 @@
                 <a href="/orders/create" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus fa-sm"></i> Nouvelle commande
                 </a>
-                <a href="/orders/stats" class="btn btn-info btn-sm">
+                <!-- <a href="/orders/stats" class="btn btn-info btn-sm">
                     <i class="fas fa-chart-bar fa-sm"></i> Statistiques
                 </a>
                 <a href="/orders/reports" class="btn btn-secondary btn-sm">
                     <i class="fas fa-file-alt fa-sm"></i> Rapports
-                </a>
+                </a> -->
             </div>
         </div>
         <div class="card-body">

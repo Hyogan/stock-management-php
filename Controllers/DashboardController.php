@@ -21,7 +21,6 @@ class DashboardController extends Controller
             $this->redirect('/auth/login'); // Redirect if not logged in
         }
         $userRole = $_SESSION['user_role'];
-        // die($userRole);
         switch ($userRole) {
             case 'admin':
                 $this->adminDashboard();

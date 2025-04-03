@@ -97,17 +97,6 @@ function check_csrf() {
         die('CSRF token validation failed');
     }
 }
-
-// function flash($key, $message = null) {
-//     if ($message) {
-//         $_SESSION['flash'][$key] = $message;
-//     } else {
-//         $message = $_SESSION['flash'][$key] ?? null;
-//         unset($_SESSION['flash'][$key]);
-//         return $message;
-//     }
-// }
-
 function formatMoney($amount) {
     return number_format($amount, 2, ',', ' ') . ' DH';
 }

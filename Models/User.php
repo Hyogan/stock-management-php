@@ -68,19 +68,18 @@ class User extends Model{
     public static function add($data) {
       // die('here we are');
       $db = Database::getInstance();
-      $query = "INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, statut, date_creation) 
-               VALUES (?, ?, ?, ?, ?, ?, NOW())";
+      $query = "INSERT INTO utilisateurs (nom, prenom,username, email, mot_de_passe, role, statut, date_creation) 
+               VALUES (?, ?, ?, ?, ?, ?, ?,NOW())";
       
       $params = [
           $data['nom'],
           $data['prenom'],
+          $data['username'],
           $data['email'],
           password_hash($data['mot_de_passe'], PASSWORD_DEFAULT),
           $data['role'] ?? 'secretaire',
-          $data['statut'] ?? 'actif'
+          $data['statut'] ?? 'actif',
       ];
-      
-      // die('here we are');
       $db->query($query, $params);
       // die('here we are');
       return $db->getConnection()->lastInsertId();
@@ -250,10 +249,11 @@ class User extends Model{
     /**
      * Vérifier si un nom d'utilisateur existe déjà
      */
-    public function usernameExists($username, $excludeId = null) 
+    public static function usernameExists($username, $excludeId = null) 
     {
       $db = Database::getInstance();
-      $query = "SELECT COUNT(*) FROM users WHERE username = ?";
+      $query = "SELECT COUNT(*) AS count FROM utilisateurs WHERE username = ?";
+      $params[] = $username;
       if ($excludeId) {
           $query .= " AND id != ?";
           $params[] = $excludeId;

@@ -1,90 +1,87 @@
 <?php
+namespace App\Controllers;
+use App\Core\Controller;
+use App\Models\User;
+use App\Utils\Auth;
 /**
  * Contrôleur d'Utilisateur
  * Gère les opérations CRUD pour les utilisateurs
  */
-class UserController {
-    private $userModel;
-    private $authController;
-    
-    public function __construct() {
-        $this->userModel = new User();
-        $this->authController = new AuthController();
+class UserController extends Controller{
+
+  public function __construct() {
+    $this->checkAuth();
+  }
+  private function checkAuth() {
+    if(!Auth::isLoggedIn()) {
     }
-    
+  }
+  private function checkAdmin() {
+    if(!Auth::isAdmin()) {
+      return $this->redirect('/dashboard');
+    }
+  }
     /**
      * Afficher la liste des utilisateurs
      */
     public function index() {
-        // Vérifier les droits d'accès (seul l'admin peut gérer les utilisateurs)
-        $this->authController->checkAccess('admin');
-        
         // Récupérer tous les utilisateurs
-        $users = $this->userModel->getAll();
-        
-        // Afficher la vue
-        require_once BASE_PATH . '/views/users/index.php';
+        $users = User::getAll();
+        // dd($users);
+        return $this->view('users/index',['users' => $users],'admin');
     }
     
     /**
      * Afficher le formulaire d'ajout d'utilisateur
      */
-    public function showAddForm() {
-        // Vérifier les droits d'accès
-        $this->authController->checkAccess('admin');
-        
+    public function create() {
         // Récupérer les types d'utilisateurs pour le formulaire
-        $userTypes = ['directeur', 'storekeeper', 'secretary'];
-        
-        // Afficher la vue
-        require_once BASE_PATH . '/views/users/add.php';
+        $userTypes = ['admin', 'magasinier', 'secretaire'];
+        return $this->view('users/create',['user' => $userTypes],'admin');
     }
     
     /**
      * Traiter l'ajout d'un utilisateur
      */
-    public function add() {
-        // Vérifier les droits d'accès
-        $this->authController->checkAccess('admin');
-        
+    public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+          $userTypes = ['admin', 'magasinier', 'secretaire'];
             // Récupérer les données du formulaire
             $userData = [
                 'nom' => $_POST['nom'] ?? '',
                 'prenom' => $_POST['prenom'] ?? '',
                 'email' => $_POST['email'] ?? '',
                 'username' => $_POST['username'] ?? '',
-                'password' => $_POST['password'] ?? '',
-                'type' => $_POST['type'] ?? ''
+                'mot_de_passe' => $_POST['password'] ?? '',
+                'role' => $_POST['role'] ?? ''
             ];
-            
-            // Valider les données
+            // dd($userData);
             $errors = $this->validateUserData($userData);
-            
             if (empty($errors)) {
                 // Ajouter l'utilisateur
-                $userId = $this->userModel->add($userData);
-                
+                $userId = User::add($userData);
                 if ($userId) {
-                    // Rediriger vers la liste des utilisateurs avec un message de succès
                     $_SESSION['success_message'] = "L'utilisateur a été ajouté avec succès.";
-                    header('Location: ' . APP_URL . '/users');
-                    exit;
+                    return $this->redirect('/users');
+                    // exit;
                 } else {
                     $error = "Une erreur s'est produite lors de l'ajout de l'utilisateur.";
+                    return $this->view('users/create',[
+                      'userTypes' => $userTypes,
+                      'error' => $errors
+                    ],
+                      'admin');
                 }
             } else {
-                // Afficher les erreurs
-                $error = implode('<br>', $errors);
-            }
-            
-            // En cas d'erreur, réafficher le formulaire avec les données
-            $userTypes = ['directeur', 'storekeeper', 'secretary'];
-            require_once BASE_PATH . '/views/users/add.php';
+                // dd($errors);
+                return $this->view('users/create',[
+                  'userTypes' => $userTypes,
+                  'errors' => $errors
+                ],
+                  'admin');         
+          }
         } else {
-            // Rediriger vers le formulaire d'ajout
-            header('Location: ' . APP_URL . '/users/add');
-            exit;
+            return $this->redirect('/users/create');
         }
     }
     
@@ -106,7 +103,7 @@ class UserController {
         }
         
         // Récupérer les types d'utilisateurs pour le formulaire
-        $userTypes = ['directeur', 'storekeeper', 'secretary'];
+        $userTypes = ['admin', 'magasinier', 'secretaire'];
         
         // Afficher la vue
         require_once BASE_PATH . '/views/users/edit.php';
@@ -164,7 +161,7 @@ class UserController {
             }
             
             // En cas d'erreur, réafficher le formulaire avec les données
-            $userTypes = ['directeur', 'storekeeper', 'secretary'];
+            $userTypes = ['admin', 'storekeeper', 'secretary'];
             require_once BASE_PATH . '/views/users/edit.php';
         } else {
             // Rediriger vers le formulaire de modification
@@ -303,23 +300,23 @@ class UserController {
       }
       
       // Vérifier que le mot de passe est fourni pour un nouvel utilisateur
-      if (!$userId && empty($data['password'])) {
+      if (!$userId && empty($data['mot_de_passe'])) {
           $errors[] = "Le mot de passe est obligatoire.";
       }
       
       // Vérifier que le type d'utilisateur est valide
-      $validTypes = ['directeur', 'storekeeper', 'secretary'];
-      if (empty($data['type']) || !in_array($data['type'], $validTypes)) {
+      $validTypes = ['admin', 'magasinier', 'secretaire'];
+      if (empty($data['role']) || !in_array($data['role'], $validTypes)) {
           $errors[] = "Le type d'utilisateur n'est pas valide.";
       }
       
       // Vérifier que le nom d'utilisateur est unique
-      if ($this->userModel->isUsernameExists($data['username'], $userId)) {
+      if (User::usernameExists($data['username'], $userId)) {
           $errors[] = "Ce nom d'utilisateur est déjà utilisé.";
       }
       
       // Vérifier que l'email est unique
-      if ($this->userModel->isEmailExists($data['email'], $userId)) {
+      if (User::EmailExists($data['email'], $userId)) {
           $errors[] = "Cet email est déjà utilisé.";
       }
       

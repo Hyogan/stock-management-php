@@ -24,7 +24,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">Produits</h6>
                 <button type="button" class="btn btn-primary btn-sm" id="addProductBtn">
-                    <i class="bi bi-plus-circle"></i> Ajouter un produit
+                    <i class="fas fa-plus-circle"></i> Ajouter un produit
                 </button>
             </div>
             <div class="card-body">
@@ -56,7 +56,7 @@
                                     <td class="product-total"><?= formatPrice($detail['montant_total']) ?></td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm remove-product">
-                                            <i class="bi bi-trash"></i>
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
                                 </tr>
@@ -94,7 +94,7 @@
                     <input type="text" class="form-control" placeholder="Rechercher un produit..." id="searchProduct">
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" type="button" id="searchProductBtn">
-                            <i class="bi bi-search"></i>
+                            <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
                 <td class="product-total">${productPrice.toFixed(2)} DH</td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm remove-product">
-                        <i class="bi bi-trash"></i>
+                        <i class="fas fa-trash"></i>
                     </button>
                 </td>
             `;
