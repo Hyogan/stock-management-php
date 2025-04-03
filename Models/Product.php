@@ -263,9 +263,11 @@ class Product extends Model {
     /**
      * Vérifier si un produit est en stock
      */
-    public static function isInStock($id, $quantity = 1) {
+    public static function isInStock($id, $quantity): bool
+    {
         $product = self::getById($id);
-        return $product && $product['quantite_stock'] >= $quantity;
+        // dd([$product['quantite_stock'],$quantity,(bool)$product['quantite_stock'] < $quantity] ) ;
+        return (bool)$product && $product['quantite_stock'] > $quantity;
     }
 
     /**

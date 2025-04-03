@@ -198,11 +198,11 @@
                                     <td><?= date('d/m/Y H:i', strtotime($operation['date_operation'])) ?></td>
                                     <td>
                                         <?php if ($operation['type_operation'] == 'entry'): ?>
-                                            <span class="badge badge-success">Entrée</span>
+                                            <span class="badge bg-success">Entrée</span>
                                         <?php elseif ($operation['type_operation'] == 'exit'): ?>
-                                            <span class="badge badge-danger">Sortie</span>
+                                            <span class="badge bg-danger">Sortie</span>
                                         <?php else: ?>
-                                            <span class="badge badge-secondary"><?= htmlspecialchars($operation['type_operation']) ?></span>
+                                            <span class="badge bg-secondary"><?= htmlspecialchars($operation['type_operation']) ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td><?= $operation['quantite'] ?></td>

@@ -30,7 +30,7 @@
                     
                     <strong><i class="fas fa-circle mr-1"></i> Statut</strong>
                     <p>
-                        <span class="badge badge-<?= $supplier['statut'] === 'actif' ? 'success' : 'danger' ?>">
+                        <span class="badge bg-<?= $supplier['statut'] === 'actif' ? 'success' : 'danger' ?>">
                             <?= ucfirst($supplier['statut']) ?>
                         </span>
                     </p>
@@ -86,7 +86,7 @@
                                     <td><?= htmlspecialchars($product['categorie_nom'] ?? '-') ?></td>
                                     <td><?= number_format($product['prix_vente'], 2, ',', ' ') ?> fcfa</td>
                                     <td>
-                                        <span class="badge badge-<?= $product['quantite_stock'] > 0 ? 'success' : 'danger' ?>">
+                                        <span class="badge bg-<?= $product['quantite_stock'] > 0 ? 'success' : 'danger' ?>">
                                             <?= $product['quantite_stock'] ?>
                                         </span>
                                     </td>

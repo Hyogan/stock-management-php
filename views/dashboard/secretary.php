@@ -125,7 +125,7 @@ $pageTitle = 'Tableau de bord Secrétaire';
                                                 default: $statusClass = 'secondary';
                                             }
                                             ?>
-                                            <span class="badge badge-<?= $statusClass ?>">
+                                            <span class="badge bg-<?= $statusClass ?>">
                                                 <?= ucfirst(str_replace('_', ' ', $order['statut'])) ?>
                                             </span>
                                         </td>
@@ -136,9 +136,9 @@ $pageTitle = 'Tableau de bord Secrétaire';
                                             <a href="/orders/edit/<?= $order['id'] ?>" class="btn btn-primary btn-sm">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="/deliveries/create/<?= $order['id'] ?>" class="btn btn-success btn-sm">
+                                            <!-- <a href="/deliveries/create/<?= $order['id'] ?>" class="btn btn-success btn-sm">
                                                 <i class="fas fa-truck"></i>
-                                            </a>
+                                            </a> -->
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

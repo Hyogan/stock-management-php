@@ -4,7 +4,7 @@
  */
 // Configuration de l'application
 define('APP_URL', 'http://localhost:8080'); // URL de base de l'application
-define('APP_NAME', 'Admin Elect'); // Nom de l'application
+define('APP_NAME', 'Gestion de stocks '); // Nom de l'application
 define('APP_VERSION', '1.0.0'); // Version de l'application
 
 // Configuration de la base de données

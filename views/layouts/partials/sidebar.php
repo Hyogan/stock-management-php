@@ -28,6 +28,7 @@
                     Fournisseurs
                 </a>
             </li>
+
             
         <?php if($_SESSION['user_role'] != 'magasinier') :?>
               <li class="nav-item">
@@ -80,14 +81,13 @@
                     statistiques
                 </a>
             </li>
-            
+            <?php endif; ?>
             <li class="nav-item">
                 <a class="nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>" href="/users/profile/">
                     <i class="fas fa-user me-2"></i>
                     Profil
                 </a>
             </li>
-            <?php endif; ?>
             <li class="nav-item">
                 <a class="nav-link" href="<?= APP_URL ?>/auth/logout">
                     <i class="fas fa-sign-out"></i>

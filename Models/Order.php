@@ -24,6 +24,15 @@ class Order extends Model {
       }
       return $db->fetchAll($query);
     }
+
+
+  public static function setStatus($orderId,$status = 'pending')
+  {
+    $db = Database::getInstance();
+    $query = "UPDATE commandes SET statut = ? WHERE id = ?";
+      return $db->query($query, [$status, $orderId]);
+  }
+
     
     /**
      * Recherche des commandes selon critères
@@ -131,7 +140,6 @@ class Order extends Model {
         $db = Database::getInstance();
         $query = "INSERT INTO details_commande (id_commande, id_produit, quantite, prix_unitaire, montant_total) 
                  VALUES (?, ?, ?, ?, ?)";
-        
         $params = [
             $data['id_commande'],
             $data['id_produit'],

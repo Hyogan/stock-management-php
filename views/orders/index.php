@@ -52,9 +52,11 @@
         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
             <h6 class="m-0 font-weight-bold text-primary">Liste des commandes</h6>
             <div class="dropdown no-arrow">
-                <a href="/orders/create" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus fa-sm"></i> Nouvelle commande
-                </a>
+             <?php if($_SESSION['user_role'] != 'magasinier') : ?>
+                  <a href="/orders/create" class="btn btn-primary btn-sm">
+                      <i class="fas fa-plus fa-sm"></i> Nouvelle commande
+                  </a> 
+             <?php endif ?>
                 <!-- <a href="/orders/stats" class="btn btn-info btn-sm">
                     <i class="fas fa-chart-bar fa-sm"></i> Statistiques
                 </a>
@@ -158,6 +160,11 @@
                                             <a href="/orders/delete/<?= $order['id'] ?>" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $order['id'] ?>">
                                                 <i class="fas fa-trash"></i>
                                             </a>
+                                            <?php if($_SESSION['user_role'] != 'magasinier') : ?>
+                                                <a href="/orders/approve/<?= $order['id'] ?>" class="btn btn-primary btn-sm">
+                                                   <i class="fas fa-check-circle"></i>
+                                                </a>  
+                                           <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                 </tr>

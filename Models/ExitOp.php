@@ -95,19 +95,19 @@ class ExitOp extends Operation {
               'montant_total' => $data['montant_total'],
               'notes' => $data['notes'] ?? null,
               'id_livraison' => $data['id_livraison'] ?? null,
-              'statut' => 'en_attente', // Or 'en_attente' if needed
+              'statut' => $data['statut'] ?? 'en_attente', // Or 'en_attente' if needed
               'date_creation' => date('Y-m-d H:i:s'),
           ]);
 
           if ($products !== null) {
               foreach ($products as $product) {
-                  if (!Product::isInStock($product['id_produit'], $product['quantite'])) {
+                  if (!Product::isInStock($product['id'], $product['quantite'])) {
                       throw new Exception("Le produit ID {$product['id_produit']} n'est pas disponible en quantité suffisante.");
                   }
 
                   $db->insert('details_sortie_stock', [
                       'id_sortie' => $exitId,
-                      'id_produit' => $product['id_produit'],
+                      'id_produit' => $product['id'],
                       'quantite' => $product['quantite'],
                       'prix_unitaire' => $product['prix_unitaire'],
                       'montant_total' => $product['quantite'] * $product['prix_unitaire'],
@@ -116,12 +116,12 @@ class ExitOp extends Operation {
                   self::updateProductStock($product['id_produit'], $product['quantite'], '-');
               }
           }
-
           $db->commit();
           return $exitId;
       } catch (Exception $e) {
           $db->rollBack();
-          throw $e;
+          flash('error',$e->getMessage());
+          return ['success' => false, 'redirect' => '/orders/show/' . $data['id_commande']];
       }
   }
 

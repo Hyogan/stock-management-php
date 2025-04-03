@@ -169,9 +169,9 @@ $pageTitle = 'Tableau de bord Magasinier';
                                         <td><?= date('d/m/Y', strtotime($operation['created_at'])) ?></td>
                                         <td>
                                             <?php if ($operation['type'] == 'entree'): ?>
-                                                <span class="badge badge-success">Entrée</span>
+                                                <span class="badge bg-success">Entrée</span>
                                             <?php else: ?>
-                                                <span class="badge badge-warning">Sortie</span>
+                                                <span class="badge bg-warning">Sortie</span>
                                             <?php endif; ?>
                                         </td>
                                         <td><?= htmlspecialchars($operation['product_name']) ?></td>

@@ -110,7 +110,7 @@
                                     <tr>
                                         <td colspan="3" class="text-right"><strong>Total</strong></td>
                                         <td colspan="2">
-                                            <span id="orderTotal">0.00</span> DH
+                                            <span id="orderTotal">0.00</span> fcfa
                                             <input type="hidden" name="montant_total" id="montantTotal" value="0">
                                         </td>
                                     </tr>
@@ -255,7 +255,7 @@
                 <td>
                     <input type="number" class="form-control product-price" name="products[${productRowCount}][prix]" step="0.01" min="0" value="${productPrice.toFixed(2)}" required>
                 </td>
-                <td class="product-total">${productPrice.toFixed(2)} DH</td>
+                <td class="product-total">${productPrice.toFixed(2)} fcfa</td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm remove-product">
                         <i class="fas fa-trash"></i>
@@ -302,7 +302,7 @@
             const totalCell = row.querySelector('.product-total');
             
             const total = quantity * price;
-            totalCell.textContent = total.toFixed(2) + ' DH';
+            totalCell.textContent = total.toFixed(2) + ' fcfa';
         }
         
         // Mettre à jour le total de la commande

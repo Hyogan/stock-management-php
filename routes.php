@@ -66,6 +66,7 @@ $routes['/orders/edit/{orderId}'] = ['OrderController', 'edit'];
 $routes['/orders/update'] = ['OrderController', 'update'];
 $routes['/orders/delete/orderId}'] = ['OrderController', 'delete'];
 $routes['/orders/show/{orderId}'] = ['OrderController', 'show'];
+$routes['/orders/status/update/{id}'] = ['OrderController', 'updateStatus'];
 
 // Routes pour les entrées de stock
 $routes['/stock-entries'] = ['EntryController', 'index'];

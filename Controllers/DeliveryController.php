@@ -10,23 +10,11 @@ use App\Utils\Auth;
 use Exception;
   class DeliveryController extends Controller
   {
-      // private $deliveryModel;
-      // private $orderModel;
-      // private $clientModel;
-      // private $productModel;
-      // private $authController;
-
       public function __construct()
       {
-          // $this->deliveryModel = $this->model('Delivery');
-          // $this->orderModel = $this->model('Order');
-          // $this->clientModel = $this->model('Client');
-          // $this->productModel = $this->model('Product');
-          // $this->authController = new AuthController();
-          
           // Check if user is logged in
           if (!isset($_SESSION['user_id'])) {
-              redirect('/auth/login');
+            $this->redirect('/auth/login');
           }
       }
 
@@ -64,7 +52,7 @@ use Exception;
           // Check if user has permission
           if (!Auth::isAdmin() && !Auth::isSecretary()) {
               $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'accéder à cette page.";
-              redirect('/dashboard');
+              $this->redirect('/dashboard');
           }
           
           if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -103,7 +91,7 @@ use Exception;
                   
                   if ($deliveryId) {
                       $_SESSION['success_message'] = 'Bon de livraison créé avec succès';
-                      redirect('/deliveries/show/' . $deliveryId);
+                      $this->redirect('/deliveries/show/' . $deliveryId);
                   } else {
                       $_SESSION['error_message'] = 'Une erreur est survenue lors de la création du bon de livraison';
                       $this->view('deliveries/create', $data);
@@ -153,7 +141,7 @@ use Exception;
           
           if (!$delivery) {
               $_SESSION['error_message'] = 'Bon de livraison introuvable';
-              redirect('/deliveries');
+              $this->redirect('/deliveries');
           }
           
           $order = Order::getById($delivery['order_id']);
@@ -177,14 +165,14 @@ use Exception;
           // Check if user has permission
           if (!Auth::isAdmin() && !Auth::isSecretary()) {
               $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'accéder à cette page.";
-              redirect('/dashboard');
+              $this->redirect('/dashboard');
           }
           
           $delivery = Delivery::getById($id);
           
           if (!$delivery) {
               $_SESSION['error_message'] = 'Bon de livraison introuvable';
-              redirect('/deliveries');
+              $this->redirect('/deliveries');
           }
           
           if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -206,7 +194,7 @@ use Exception;
               if (empty($data['delivery_date_err'])) {
                   if (Delivery::update($id,$data)) {
                       $_SESSION['success_message'] = 'Bon de livraison mis à jour avec succès';
-                      redirect('/deliveries/show/' . $id);
+                      $this->redirect('/deliveries/show/' . $id);
                   } else {
                       $_SESSION['error_message'] = 'Une erreur est survenue lors de la mise à jour du bon de livraison';
                       $this->view('deliveries/edit', $data);
@@ -234,7 +222,7 @@ use Exception;
           // Check if user has permission
           if (!Auth::isAdmin()) {
               $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'effectuer cette action.";
-              redirect('/deliveries');
+              $this->redirect('/deliveries');
           }
           
           if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -245,7 +233,7 @@ use Exception;
               }
           }
           
-          redirect('/deliveries');
+          $this->redirect('/deliveries');
       }
       
       public function complete($id)
@@ -253,14 +241,14 @@ use Exception;
           // Check if user has permission
           if (!Auth::isAdmin() && !Auth::isStorekeeper()) {
               $_SESSION['error_message'] = "Vous n'avez pas l'autorisation d'effectuer cette action.";
-              redirect('/deliveries');
+              $this->redirect('/deliveries');
           }
           
           $delivery = Delivery::getById($id);
           
           if (!$delivery) {
               $_SESSION['error_message'] = 'Bon de livraison introuvable';
-              redirect('/deliveries');
+              $this->redirect('/deliveries');
           }
           
           // Update delivery status to completed
@@ -282,7 +270,7 @@ use Exception;
               $_SESSION['error_message'] = 'Une erreur est survenue lors de la mise à jour du bon de livraison';
           }
           
-          redirect('/deliveries/show/' . $id);
+          $this->redirect('/deliveries/show/' . $id);
       }
       
       public function generatePdf($id)
@@ -291,7 +279,7 @@ use Exception;
           
           if (!$delivery) {
               $_SESSION['error_message'] = 'Bon de livraison introuvable';
-              redirect('/deliveries');
+              $this->redirect('/deliveries');
           }
           
           $order = Order::getById($delivery['order_id']);
@@ -302,7 +290,7 @@ use Exception;
           // This is a placeholder for the actual PDF generation code
           
           $_SESSION['success_message'] = 'PDF du bon de livraison généré avec succès';
-          redirect('/deliveries/show/' . $id);
+          $this->redirect('/deliveries/show/' . $id);
       }
 
       /**

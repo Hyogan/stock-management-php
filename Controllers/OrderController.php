@@ -7,6 +7,7 @@ use App\Controllers\DeliveryController;
 use App\Utils\Auth;
 use App\Models\Order;
 use App\Models\Client;
+use App\Models\ExitOp;
 use App\Models\Product;
 
 class OrderController extends Controller {
@@ -65,19 +66,22 @@ class OrderController extends Controller {
         // Récupérer les détails de la commande
         $orderDetails = Order::getOrderDetails($orderId);
         $payments = Order::getOrderPayments($orderId);
-
-        // $data3 = [
-        //   '1' => $orderDetails,
-        //   '3' => $payments
-        // ];
-        // var_dump($data3);
-        // die();
-    
-        $this->view('orders/show', [
+        $data = [
             'order' => $order,
             'orderDetails' => $orderDetails,
             'payments' => $payments
-        ], 'admin');
+          ];
+          // dd($order);
+          // [id] => 1
+          // [id_commande] => 21
+          // [id_produit] => 3
+          // [quantite] => 3
+          // [prix_unitaire] => 3000.00
+          // [montant_total] => 9000.00
+          // [reference] => produit 1 
+          // [designation] => designatio produit 1
+          // [image] => /uploads/products/67ede2aa851b1_Gemini_Generated_Image_fij0qyfij0qyfij0.jpeg
+        $this->view('orders/show', $data, 'admin');
     }
 
     // Affiche le formulaire de création
@@ -106,6 +110,7 @@ class OrderController extends Controller {
             $products = $_POST['products'] ?? [];
             $quantities = $_POST['quantities'] ?? [];
             $prices = $_POST['prices'] ?? [];
+            // dd($quantities);
             
             if ($clientId <= 0) {
                 $_SESSION['error'] = "Veuillez sélectionner un client valide.";
@@ -146,24 +151,35 @@ class OrderController extends Controller {
             
             if ($orderId) {
                 // Ajouter les détails de la commande
-                foreach ($products as $index => $productId) {
-                    if (isset($quantities[$index]) && isset($prices[$index])) {
+                foreach ($products as $index => $product) {
+                    if($product) {
                         $detailData = [
-                            'id_commande' => $orderId,
-                            'id_produit' => $productId,
-                            'quantite' => $quantities[$index],
-                            'prix_unitaire' => $prices[$index],
-                            'montant_total' => $quantities[$index] * $prices[$index]
-                        ];
-                        
-                        Order::addOrderDetail($detailData);
+                          'id_commande' => $orderId,
+                          'id_produit' => $product['id'],
+                          'quantite' => $product['quantite'],
+                          'prix_unitaire' => $product['prix'],
+                          'montant_total' => $product['prix'] * $product['quantite']
+                      ];
+                      
+                      Order::addOrderDetail($detailData);
                     }
+                    // if (isset($quantities[$index]) && isset($prices[$index])) {
+                        
+                    //     $detailData = [
+                    //         'id_commande' => $orderId,
+                    //         'id_produit' => $productId,
+                    //         'quantite' => $quantities[$index],
+                    //         'prix_unitaire' => $prices[$index],
+                    //         'montant_total' => $quantities[$index] * $prices[$index]
+                    //     ];
+                        
+                    //     Order::addOrderDetail($detailData);
+                    // }
+                    flash('success', "Commande créée avec succès.");
+                    $this->redirect('/orders');
                 }
-                
-                $_SESSION['success'] = "Commande créée avec succès.";
-                $this->redirect('/orders');
             } else {
-                $_SESSION['error'] = "Erreur lors de la création de la commande.";
+                flash('error', "Erreur lors de la création de la commande.");
                 $this->redirect('/orders/create');
             }
         }
@@ -291,6 +307,7 @@ class OrderController extends Controller {
 
     // Change le statut d'une commande
     public function updateStatus($id) {
+      // dd($id);
         $this->checkAuth();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -314,21 +331,37 @@ class OrderController extends Controller {
                 'statut' => $newStatus,
                 'date_modification' => date('Y-m-d H:i:s')
             ];
-            
             $updated = Order::update($id, $orderData);
-            
             if ($updated) {
                 // Si la commande est approuvée, créer une sortie de stock
                 if ($newStatus == 'approved') {
-                    $this->createStockExit($id);
+                    // $this->createStockExit($id);
+                    $order = Order::getById($id);
+                    $orderDetails = Order::getOrderDetails($id);
+                    $exitData = [
+                      'date_sortie' => $order['date_livraison_prevue'],
+                      'id_utilisateur' => Auth::Id(),
+                      'type_sortie' => 'vente',
+                      'id_commande' => $order['id'],
+                      'montant_total' => $order['montant_total'],
+                      'notes' => 'Sortie automatique pour la commande ' . $order['reference'],
+                      'statut' => 'validee',
+                      'date_creation' => date('Y-m-d H:i:s')
+                  ];
+                  $result = ExitOp::create($exitData,$orderDetails);
+                  if($result == false) {
+                    if ($result['redirect']) {
+                      // flash('error',$e->getMessage());
+                      return $this->redirect($result['redirect']);
+                  }
+                  }
                 }
-                
-                $_SESSION['success'] = "Statut de la commande mis à jour avec succès.";
+                flash("sucess","Statut de la commande mis a jour avec succès");
             } else {
-                $_SESSION['error'] = "Erreur lors de la mise à jour du statut.";
+              flash("error","Erreur lors de la mise à jour du statut.");
             }
             
-            $this->redirect("/orders/$id");
+            $this->redirect("/orders/show/$id");
         }
     }
 
@@ -436,7 +469,7 @@ class OrderController extends Controller {
     private function createStockExit($orderId) {
       $order = Order::getById($orderId);
       $orderDetails = Order::getOrderDetails($orderId);
-      
+      // dd($orderDetails);
       // Générer une référence unique pour la sortie de stock
       $reference = 'SRT-' . date('YmdHis') . '-' . rand(100, 999);
       
@@ -814,7 +847,7 @@ public function generateDeliveryNote($id)
             $totalUnpaid += $invoice['montant_total'];
         }
         
-        // If total unpaid amount exceeds 10000 DH, consider client not solvent
+        // If total unpaid amount exceeds 10000 fcfa, consider client not solvent
         if ($totalUnpaid > 10000) {
             return false;
         }
