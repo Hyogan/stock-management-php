@@ -75,16 +75,16 @@
             </li>
             
             <li class="nav-item">
-                <a class="nav-link <?= $currentPage === 'reports' ? 'active' : '' ?>" href="<?= APP_URL ?>/reports">
+                <a class="nav-link <?= $currentPage === 'reports' ? 'active' : '' ?>" href="<?= APP_URL ?>/products/stats">
                     <i class="fas fa-chart-bar me-2"></i>
-                    Rapports
+                    statistiques
                 </a>
             </li>
             
             <li class="nav-item">
-                <a class="nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>" href="<?= APP_URL ?>/settings">
-                    <i class="fas fa-cog me-2"></i>
-                    Paramètres
+                <a class="nav-link <?= $currentPage === 'settings' ? 'active' : '' ?>" href="/users/profile/">
+                    <i class="fas fa-user me-2"></i>
+                    Profil
                 </a>
             </li>
             <?php endif; ?>

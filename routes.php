@@ -31,6 +31,9 @@ $routes['/products/edit/{productId}'] = ['ProductController', 'edit'];
 $routes['/products/update/{productId}'] = ['ProductController', 'update'];
 $routes['/products/delete/{productId}'] = ['ProductController', 'delete'];
 $routes['/products/show/{productId}'] = ['ProductController', 'show'];
+$routes['/products/exportCsv'] = ['ProductController', 'exportCsv'];
+$routes['/products/stats'] = ['ProductController', 'statistics'];
+$routes['/products/generateStockReport'] = ['ProductController', 'generateStockReport'];
 // Routes des catégories
 $routes['/categories'] = ['CategoryController', 'index'];
 $routes['/categories/create'] = ['CategoryController', 'create'];
@@ -87,8 +90,10 @@ $routes['/exits/show/{exitId}'] = ['ExitController', 'show'];
 $routes['/users'] = ['UserController', 'index'];
 $routes['/users/create'] = ['UserController', 'create'];
 $routes['/users/store'] = ['UserController', 'store'];
-$routes['/users/edit'] = ['UserController', 'edit'];
-$routes['/users/update'] = ['UserController', 'update'];
-$routes['/users/delete'] = ['UserController', 'delete'];
-$routes['/users/show'] = ['UserController', 'show'];
+$routes['/users/edit/{id}'] = ['UserController', 'edit'];
+$routes['/users/update/{id}'] = ['UserController', 'update'];
+$routes['/users/delete/{id}'] = ['UserController', 'delete'];
+$routes['/users/show/{id}'] = ['UserController', 'show'];
+$routes['/users/profile'] = ['UserController', 'profile'];
+$routes['/users/profile/update'] = ['UserController', 'updateProfile'];
 

@@ -4,14 +4,7 @@ use Exception;
 use App\Core\Model;
 use App\Utils\Database;
 class User extends Model{
-  // private $id;
-  // private $name;
-  // private $email;
-  // private $password;
-  // private $role;
-  // private $created_at;
-  // private $updated_at;
-  protected static $table = 'utilisateurs';
+    protected static $table = 'utilisateurs';
      /**
      * Récupère tous les utilisateurs
      */
@@ -94,6 +87,7 @@ class User extends Model{
       $query = "UPDATE utilisateurs 
                SET nom = ?, 
                    prenom = ?, 
+                   username = ?, 
                    email = ?, 
                    role = ?, 
                    statut = ?, 
@@ -103,6 +97,7 @@ class User extends Model{
       $params = [
           $data['nom'],
           $data['prenom'],
+          $data['username'],
           $data['email'],
           $data['role'],
           $data['statut'],    
@@ -111,6 +106,10 @@ class User extends Model{
         
         return $db->query($query, $params);
     }
+    /**
+     * Charger les détails d'un utilisateur
+     */
+    
      /**
      * Supprimer un utilisateur
      */
@@ -118,7 +117,7 @@ class User extends Model{
       $db = Database::getInstance();
       // Vérifier si l'utilisateur a effectué des opérations
       $operations = $db->fetch(
-          "SELECT COUNT(*) as count FROM operation WHERE id_utilisateur = ?",
+          "SELECT COUNT(*) as count FROM operations_stock WHERE id_utilisateur = ?",
           [$id]
       );
       
@@ -136,21 +135,6 @@ class User extends Model{
        $db = Database::getInstance();
         return $db->fetchAll("SELECT * FROM utilisateurs WHERE type = ? ORDER BY id", [$type]);
     }
-
-     /**
-     * Authentifier un utilisateur
-     */
-    public function authenticate($username, $password) {
-      $user = $this->getByUsername($username);
-      if (!$user) {
-          return false;
-      }
-      if (password_verify($password, $user['mot_de_passe'])) {
-          return $user;
-      }
-      
-      return false;
-  }
     
     /**
      * Vérifier si un utilisateur existe
@@ -206,7 +190,7 @@ class User extends Model{
   {
       $db = Database::getInstance();{    
       return $db->fetchAll(
-          "SELECT * FROM operation WHERE id_utilisateur = ? ORDER BY date DESC",
+          "SELECT * FROM operation_stock WHERE id_utilisateur = ? ORDER BY date DESC",
           [$userId]
       );
     }
@@ -240,7 +224,7 @@ class User extends Model{
               COUNT(CASE WHEN type = 'entree' THEN 1 END) as total_entries,
               COUNT(CASE WHEN type = 'sortie' THEN 1 END) as total_exits,
               MAX(date) as last_operation_date
-           FROM operation
+           FROM operation_stock
            WHERE id_utilisateur = ?",
           [$userId]
       );

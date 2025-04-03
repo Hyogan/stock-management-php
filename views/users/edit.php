@@ -4,9 +4,11 @@
             <h6 class="m-0 font-weight-bold text-primary">Modifier un Utilisateur</h6>
         </div>
         <div class="card-body">
-            <?php if (isset($error)): ?>
+            <?php if (isset($errors)): ?>
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= $error ?>
+                    <?php foreach ($errors as $error): ?>
+                        <?= $error ?> <br>
+                    <?php endforeach ?>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -62,11 +64,20 @@
 
                 <div class="form-group">
                     <label for="type">Type d'utilisateur <span class="text-danger">*</span></label>
-                    <select class="form-control" id="type" name="type" required>
+                    <select class="form-control" id="role" name="role" required>
                         <option value="">Sélectionner un type</option>
                         <option value="admin" <?= ($user['role'] == 'admin') ? 'selected' : '' ?>>Administrateur</option>
-                        <option value="storekeeper" <?= ($user['role'] == 'storekeeper') ? 'selected' : '' ?>>Magasinier</option>
-                        <option value="secretary" <?= ($user['role'] == 'secretary') ? 'selected' : '' ?>>Secrétaire</option>
+                        <option value="magasinier" <?= ($user['role'] == 'magasinier') ? 'selected' : '' ?>>Magasinier</option>
+                        <option value="secretaire" <?= ($user['role'] == 'secretaire') ? 'selected' : '' ?>>Secrétaire</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="type">Statut <span class="text-danger">*</span></label>
+                    <select class="form-control" id="statut" name="statut" required>
+                        <option value="">Sélectionner un statut</option>
+                        <option value="actif" <?= (isset($_POST['statut']) && $_POST['role'] == 'statut') ? 'selected' : '' ?>>Actif</option>
+                        <option value="inactif" <?= (isset($_POST['statut']) && $_POST['role'] == 'statut') ? 'selected' : '' ?>>Inactif</option>
                     </select>
                 </div>
 

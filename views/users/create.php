@@ -71,6 +71,15 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                  <label for="type">Statut <span class="text-danger">*</span></label>
+                    <select class="form-control" id="statut" name="statut" required>
+                        <option value="">Sélectionner un statut</option>
+                        <option value="actif" <?= (isset($_POST['statut']) && $_POST['role'] == 'statut') ? 'selected' : '' ?>>Actif</option>
+                        <option value="inactif" <?= (isset($_POST['statut']) && $_POST['role'] == 'statut') ? 'selected' : '' ?>>Inactif</option>
+                    </select>
+                </div>
+
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">Enregistrer</button>
                     <a href="<?= APP_URL ?>/users" class="btn btn-secondary">Annuler</a>

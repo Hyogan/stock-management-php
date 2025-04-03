@@ -36,7 +36,6 @@
                             <th>ID</th>
                             <th>Nom</th>
                             <th>Email</th>
-                            <!-- <th>Nom d'utilisateur</th> -->
                             <th>Type</th>
                             <th>Dernière connexion</th>
                             <th>Actions</th>
@@ -53,7 +52,6 @@
                                     <td><?= $user['id'] ?></td>
                                     <td><?= htmlspecialchars($user['nom'] . ' ' . $user['prenom']) ?></td>
                                     <td><?= htmlspecialchars($user['email']) ?></td>
-                                    <!-- <td><?= htmlspecialchars($user['username']) ?></td> -->
                                     <td>
                                         <?php
                                             $typeLabels = [
@@ -71,25 +69,25 @@
                                         <a href="<?= APP_URL ?>/users/edit/<?= $user['id'] ?>" class="btn btn-primary btn-sm">
                                             <i class="fas fa-pencil"></i>
                                         </a>
+                                        <a href="<?= APP_URL ?>/users/show/<?= $user['id'] ?>" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                         <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                                            <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal<?= $user['id'] ?>">
+                                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?= $user['id'] ?>">
                                                 <i class="fas fa-trash"></i>
                                             </button>
-                                            <!-- Modal de confirmation de suppression -->
                                             <div class="modal fade" id="deleteModal<?= $user['id'] ?>" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel<?= $user['id'] ?>" aria-hidden="true">
                                                 <div class="modal-dialog" role="document">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
                                                             <h5 class="modal-title" id="deleteModalLabel<?= $user['id'] ?>">Confirmer la suppression</h5>
-                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                <span aria-hidden="true">&times;</span>
-                                                            </button>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
                                                         <div class="modal-body">
                                                             Êtes-vous sûr de vouloir supprimer l'utilisateur "<?= htmlspecialchars($user['nom'] . ' ' . $user['prenom']) ?>" ?
                                                         </div>
                                                         <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                                             <a href="<?= APP_URL ?>/users/delete/<?= $user['id'] ?>" class="btn btn-danger">Supprimer</a>
                                                         </div>
                                                     </div>
@@ -106,3 +104,24 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    <?php foreach ($users as $user): ?>
+        const myModal<?= $user['id'] ?> = new bootstrap.Modal(document.getElementById('deleteModal<?= $user['id'] ?>'));
+        console.log('modal initialized for deleteModal<?= $user['id'] ?>');
+
+        const button<?= $user['id'] ?> = document.querySelector('[data-bs-target="#deleteModal<?= $user['id'] ?>"]');
+
+        if (button<?= $user['id'] ?>) {
+            button<?= $user['id'] ?>.addEventListener('click', function() {
+                console.log('modal being shown for deleteModal<?= $user['id'] ?>');
+                myModal<?= $user['id'] ?>.show();
+                console.log('modal shown for deleteModal<?= $user['id'] ?>');
+            });
+        } else {
+            console.error('Button not found for modal deleteModal<?= $user['id'] ?>');
+        }
+    <?php endforeach; ?>
+});
+</script>

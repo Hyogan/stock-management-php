@@ -108,6 +108,7 @@ class ProductController extends Controller{
           'reference' => $_POST['reference'] ?? '',
           'designation' => $_POST['designation'] ?? '',
           'description' => $_POST['description'] ?? '',
+          'unite' => $_POST['unite'] ?? '',
           'prix_achat' => $_POST['prix_achat'] ?? 0,
           'prix_vente' => $_POST['prix_vente'] ?? 0,
           'quantite_stock' => $_POST['quantite_stock'] ?? 0,
@@ -867,14 +868,18 @@ public function exportCsv() {
   fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
   
   // Ajouter les en-têtes de colonnes
-  fputcsv($output, ['ID', 'Désignation', 'Quantité', 'Prix d\'achat', 'Prix de vente', 'Date de création']);
+  fputcsv($output, ['ID', 'Désignation','unite','Catégorie','Fournisseur', 'Quantité Stock','Quantité Alerte', 'Prix d\'achat', 'Prix de vente', 'Date de création']);
   
   // Ajouter les données
   foreach ($products as $product) {
       fputcsv($output, [
-          $product['id_produit'],
+          $product['id'],
           $product['designation'],
-          $product['quantite'],
+          $product['unite'],
+          $product['categorie_nom'],
+          $product['fournisseur_nom'],
+          $product['quantite_stock'],
+          $product['quantite_alerte'],
           $product['prix_achat'],
           $product['prix_vente'],
           $product['date_creation']
@@ -900,7 +905,7 @@ public function generateStockReport() {
   $stockValue = Product::getTotalStockValue();
   
   // Créer le PDF (utilisation d'une bibliothèque comme FPDF ou TCPDF)
-  require_once BASE_PATH . '/vendor/fpdf/fpdf.php';
+  require_once BASE_PATH . '/lib/fpdf/fpdf.php';
   
   $pdf = new \FPDF();
   $pdf->AddPage();
@@ -913,7 +918,7 @@ public function generateStockReport() {
   
   // Résumé
   $pdf->SetFont('Arial', 'B', 12);
-  $pdf->Cell(0, 10, 'Résumé du Stock', 0, 1, 'L');
+  $pdf->Cell(0, 10, 'Resume du Stock', 0, 1, 'L');
   $pdf->SetFont('Arial', '', 10);
   $pdf->Cell(0, 10, 'Nombre total de produits: ' . count($products), 0, 1, 'L');
   $pdf->Cell(0, 10, 'Produits en rupture de stock: ' . count($outOfStock), 0, 1, 'L');
@@ -927,22 +932,23 @@ public function generateStockReport() {
   
   $pdf->SetFont('Arial', 'B', 10);
   $pdf->Cell(10, 10, 'ID', 1, 0, 'C');
-  $pdf->Cell(80, 10, 'Désignation', 1, 0, 'C');
-  $pdf->Cell(30, 10, 'Quantité', 1, 0, 'C');
+  $pdf->Cell(80, 10, 'Designation', 1, 0, 'C');
+  $pdf->Cell(30, 10, 'Quantite', 1, 0, 'C');
   $pdf->Cell(30, 10, 'Prix d\'achat', 1, 0, 'C');
   $pdf->Cell(30, 10, 'Prix de vente', 1, 1, 'C');
   
   $pdf->SetFont('Arial', '', 10);
   foreach ($products as $product) {
-      $pdf->Cell(10, 10, $product['id_produit'], 1, 0, 'C');
+      $pdf->Cell(10, 10, $product['id'], 1, 0, 'C');
       $pdf->Cell(80, 10, $product['designation'], 1, 0, 'L');
-      $pdf->Cell(30, 10, $product['quantite'], 1, 0, 'C');
+      $pdf->Cell(30, 10, $product['quantite_stock'], 1, 0, 'C');
       $pdf->Cell(30, 10, formatPrice($product['prix_achat']), 1, 0, 'R');
       $pdf->Cell(30, 10, formatPrice($product['prix_vente']), 1, 1, 'R');
   }
   
   // Sortie du PDF
   $pdf->Output('rapport_stock_' . date('Y-m-d') . '.pdf', 'D');
+  // return $this->redirect('/products');
   exit;
 }
 
@@ -994,26 +1000,22 @@ public function statistics() {
     // Vérifier les droits d'accès
     $authController = new AuthController();
     $authController->checkAccess('any');
-    // Récupérer les statistiques
-    // $totalProducts = Product::countProducts();
-    // $totalValue = Product::getTotalStockValue();
-    // $outOfStockCount = Product::getOutOfStock();
-    // $lowStockCount = Product::getLowStock();
-    // $mostSoldProducts = Product::getMostSold(5);
-    // $leastSoldProducts = Product::getLeastSoldProducts(5);
-    // $mostProfitableProducts = Product::getMostProfitableProducts(5);
-    
     // Définir le titre de la page
     $pageTitle = 'Statistiques des Produits';
-    return $this->view('products/index',[
-      'totalProducts' => Product::countProducts(),
-      'totalValue' => Product::getTotalStockValue(),
-      'outOfStockCount' => Product::getOutOfStock(),
-      'lowStockCount' => Product::getLowStock(),
-      'mostSoldProducts' => Product::getMostSold(5),
-      'leastSoldProducts' => Product::getLeastSoldProducts(5),
-      'mostProfitableProducts' => Product::getMostProfitableProducts(5),
-    ]);
+    $data = [
+        'pageTitle' => $pageTitle,
+        'totalProducts' => Product::countProducts(),
+        'totalValue' => Product::getTotalStockValue(),
+        'outOfStocks' => Product::getOutOfStock(),
+        'outOfStocksCount' => count(Product::getOutOfStock()),
+        'lowStockCount' => count(Product::getLowStock()),
+        'lowStock' => Product::getLowStock(),
+        'mostSoldProducts' => Product::getMostSold(5),
+        'leastSoldProducts' => Product::getLeastSoldProducts(5),
+        'mostProfitableProducts' => Product::getMostProfitableProducts(5),
+    ];
+    // dd($data);
+    return $this->view('products/stats',$data,'admin');
   }
 
   

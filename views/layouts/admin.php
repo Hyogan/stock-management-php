@@ -8,7 +8,7 @@ ob_start(); ?>
     <?php require_once BASE_PATH . '/views/layouts/partials/header.php'; ?>
 
     <div class="row d-flex flex-grow-1 overflow-y-hidden" style="margin:0; height: 100vh;">
-            <?php include_once BASE_PATH . '/views/layouts/partials/sidebar.php'; ?>
+        <?php include_once BASE_PATH . '/views/layouts/partials/sidebar.php'; ?>
         <div style="margin:0; height: 100%; overflow-y: auto;" class="col-md-9 flex-grow-1">
             <main class="admin-content pt-4">
                 <?php if ($message = flash('success')): ?>

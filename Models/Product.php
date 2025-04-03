@@ -81,7 +81,7 @@ class Product extends Model {
             $data['quantite_alerte'] ?? 5,
             $data['id_categorie'] ?? null,
             $data['id_fournisseur'] ?? null,
-            $data['unite'] ?? null,
+            $data['unite'] ?? 'qt',
             $data['image'] ?? null,
             $data['statut'] ?? 'actif'
         ];
@@ -354,6 +354,69 @@ class Product extends Model {
         ", [$supplierId]);
     }
 
+     /**
+     * Récupérer les produits les plus vendus
+     */
+    public static function getMostSold($limit = 10) {
+      $db = Database::getInstance();
+      return $db->fetchAll(
+          "SELECT p.*, SUM(ds.quantite) as total_sold 
+           FROM produits p
+           JOIN details_sortie_stock ds ON p.id = ds.id_produit
+           JOIN sorties_stock ss ON ds.id_sortie = ss.id
+           WHERE ss.type_sortie = 'vente' 
+           GROUP BY p.id
+           ORDER BY total_sold DESC
+           LIMIT ?",
+          [$limit]
+      );
+  }
+
+      /**
+     * Récupère les produits les moins vendus
+     */
+
+public static function getLeastSoldProducts($limit = 10, $period = 'month') {
+    $db = Database::getInstance();
+    $dateCondition = self::getDateConditionForPeriod($period, 'ss.date_sortie');
+
+    $sql = "SELECT p.id, p.designation, p.reference, p.prix_vente, 
+                   COALESCE(SUM(ds.quantite), 0) as total_vendu
+            FROM produits p
+            LEFT JOIN details_sortie_stock ds ON p.id = ds.id_produit
+            LEFT JOIN sorties_stock ss ON ds.id_sortie = ss.id
+            WHERE ss.type_sortie = 'vente' 
+            " . ($dateCondition ? "AND $dateCondition" : "") . "
+            GROUP BY p.id
+            ORDER BY total_vendu ASC
+            LIMIT ?";
+
+    return $db->fetchAll($sql, [$limit]);
+}
+
+     /**
+     * Récupère les produits les plus rentables
+     */
+
+public static function getMostProfitableProducts($limit = 10, $period = 'month') {
+    $db = Database::getInstance();
+    $dateCondition = self::getDateConditionForPeriod($period, 'ss.date_sortie');
+
+    $sql = "SELECT p.id, p.designation, p.reference, p.prix_vente, 
+                   COALESCE(SUM(ds.quantite), 0) as total_vendu,
+                   COALESCE(SUM(ds.quantite * (p.prix_vente - p.prix_achat)), 0) as profit_total
+            FROM produits p
+            LEFT JOIN details_sortie_stock ds ON p.id = ds.id_produit
+            LEFT JOIN sorties_stock ss ON ds.id_sortie = ss.id
+            WHERE ss.type_sortie = 'vente'
+            " . ($dateCondition ? "AND $dateCondition" : "") . "
+            GROUP BY p.id
+            ORDER BY profit_total DESC
+            LIMIT ?";
+
+    return $db->fetchAll($sql, [$limit]);
+}
+
     /**
      * Récupérer le produit le plus cher
      */
@@ -519,4 +582,23 @@ class Product extends Model {
             ORDER BY p.designation ASC
         ");
     }
+/**
+* Génère la condition SQL pour filtrer par période
+* 
+* @param string $period Période ('month', 'quarter', 'year')
+* @param string $dateField Nom du champ de date dans la requête
+* @return string Condition SQL pour la période
+*/
+    private static function getDateConditionForPeriod($period, $dateField) {
+      switch ($period) {
+          case 'month':
+              return "$dateField >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)";
+          case 'quarter':
+              return "$dateField >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+          case 'year':
+              return "$dateField >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
+          default:
+              return "";
+      }
+  }
 }

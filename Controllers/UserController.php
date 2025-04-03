@@ -56,7 +56,7 @@ class UserController extends Controller{
                 'role' => $_POST['role'] ?? ''
             ];
             // dd($userData);
-            $errors = $this->validateUserData($userData);
+            $errors = $this->validateUserData(data: $userData,type: 'create');
             if (empty($errors)) {
                 // Ajouter l'utilisateur
                 $userId = User::add($userData);
@@ -68,7 +68,7 @@ class UserController extends Controller{
                     $error = "Une erreur s'est produite lors de l'ajout de l'utilisateur.";
                     return $this->view('users/create',[
                       'userTypes' => $userTypes,
-                      'error' => $errors
+                      'errors' => $errors
                     ],
                       'admin');
                 }
@@ -88,25 +88,25 @@ class UserController extends Controller{
     /**
      * Afficher le formulaire de modification d'utilisateur
      */
-    public function showEditForm($id) {
+    public function edit($id) 
+    {
         // Vérifier les droits d'accès
-        $this->authController->checkAccess('admin');
-        
+        $this->checkAdmin();        
         // Récupérer l'utilisateur
-        $user = $this->userModel->getById($id);
-        
+        $user = User::getById($id);
         if (!$user) {
-            // Utilisateur non trouvé
             $_SESSION['error_message'] = "L'utilisateur demandé n'existe pas.";
-            header('Location: ' . APP_URL . '/users');
-            exit;
+            return $this->redirect('/users');
         }
         
         // Récupérer les types d'utilisateurs pour le formulaire
         $userTypes = ['admin', 'magasinier', 'secretaire'];
-        
         // Afficher la vue
-        require_once BASE_PATH . '/views/users/edit.php';
+        return $this->view(
+          'users/edit',[
+            'user' => $user,
+            'userTypes' => $userTypes
+          ],'admin');
     }
     
     /**
@@ -114,59 +114,56 @@ class UserController extends Controller{
      */
     public function update($id) {
         // Vérifier les droits d'accès
-        $this->authController->checkAccess('admin');
-        
+        $this->checkAdmin();
         // Vérifier si l'utilisateur existe
-        $user = $this->userModel->getById($id);
-        
+        $user = User::getById($id);
         if (!$user) {
-            $_SESSION['error_message'] = "L'utilisateur demandé n'existe pas.";
-            header('Location: ' . APP_URL . '/users');
-            exit;
-        }
-        
+          flash("error","L'utilisateur demandé n'existe pas.");
+          return $this->redirect('/users');
+      }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Récupérer les données du formulaire
             $userData = [
                 'nom' => $_POST['nom'] ?? '',
                 'prenom' => $_POST['prenom'] ?? '',
                 'email' => $_POST['email'] ?? '',
                 'username' => $_POST['username'] ?? '',
-                'type' => $_POST['type'] ?? ''
+                'role' => $_POST['role'] ?? '',
+                'statut' => $_POST['statut'] ?? 'actif'
             ];
-            
+            $userTypes = ['admin', 'magasinier', 'secretaire'];
             // Ajouter le mot de passe seulement s'il est fourni
-            if (!empty($_POST['password'])) {
-                $userData['password'] = $_POST['password'];
+            if (!empty($_POST['mot_de_passe'])) {
+                $userData['mot_de_passe'] = $_POST['mot_de_passe'];
             }
-            
-            // Valider les données
-            $errors = $this->validateUserData($userData, $id);
-            
+            // Valide les données
+            $errors = $this->validateUserData($userData, $id,'update');
             if (empty($errors)) {
                 // Mettre à jour l'utilisateur
-                $success = $this->userModel->update($id, $userData);
-                
+                $success = User::update($id, $userData);
                 if ($success) {
-                    // Rediriger vers la liste des utilisateurs avec un message de succès
-                    $_SESSION['success_message'] = "L'utilisateur a été mis à jour avec succès.";
-                    header('Location: ' . APP_URL . '/users');
-                    exit;
+                   flash("success","L'utilisateur a été mis à jour avec succès.");
+                   return $this->redirect('/users');
                 } else {
-                    $error = "Une erreur s'est produite lors de la mise à jour de l'utilisateur.";
+                  flash("error","Quelque chose s'est mal passé ");
+                  return $this->view('users/edit/'.$id,[
+                    'userTypes' => $userTypes,
+                    'user' => $user,
+                    'errors' => $errors
+                  ],
+                    'admin');
                 }
             } else {
                 // Afficher les erreurs
-                $error = implode('<br>', $errors);
-            }
-            
-            // En cas d'erreur, réafficher le formulaire avec les données
-            $userTypes = ['admin', 'storekeeper', 'secretary'];
-            require_once BASE_PATH . '/views/users/edit.php';
+                $data = [
+                  'userTypes' => $userTypes,
+                  'errors' => $errors,
+                  'user' => $user
+                ];
+                // dd($userData);
+                return $this->view('users/edit',$data,'admin'); 
+              }
         } else {
-            // Rediriger vers le formulaire de modification
-            header('Location: ' . APP_URL . '/users/edit/' . $id);
-            exit;
+          return $this->redirect('/users/edit/'.$id);
         }
     }
     
@@ -175,59 +172,64 @@ class UserController extends Controller{
      */
     public function delete($id) {
         // Vérifier les droits d'accès
-        $this->authController->checkAccess('admin');
-        
+        $this->checkAdmin();   
         // Vérifier si l'utilisateur existe
-        $user = $this->userModel->getById($id);
-        
+        $user = User::getById($id);
         if (!$user) {
-            $_SESSION['error_message'] = "L'utilisateur demandé n'existe pas.";
-            header('Location: ' . APP_URL . '/users');
-            exit;
+            flash("error","L'utilisateur demandé n'existe pas");
+            $this->redirect('/users');
         }
         
         // Empêcher la suppression de son propre compte
         if ($id == $_SESSION['user_id']) {
-            $_SESSION['error_message'] = "Vous ne pouvez pas supprimer votre propre compte.";
-            header('Location: ' . APP_URL . '/users');
-            exit;
+            flash("success","Vous ne pouvez pas supprimer votre propre compte.");
+            $this->redirect('/users');
         }
         
         // Supprimer l'utilisateur
-        $success = $this->userModel->delete($id);
-        
+        $success = User::delete($id);
         if ($success) {
-          $_SESSION['success_message'] = "L'utilisateur a été supprimé avec succès.";
+          flash("success","L'utilisateur a été supprimé avec succès.");
       } else {
-          $_SESSION['error_message'] = "Une erreur s'est produite lors de la suppression de l'utilisateur.";
+          flash( "success","Une erreur s'est produite lors de la suppression de l'utilisateur.");
       }
-      
-      header('Location: ' . APP_URL . '/users');
-      exit;
+      return $this->redirect('/users');
   }
 
-   /**
-     * Afficher le profil de l'utilisateur connecté
-     */
-    public function profile() {
-      // Vérifier si l'utilisateur est connecté
-      $this->authController->checkLogin();
-      
-      // Récupérer les informations de l'utilisateur
-      $user = $this->userModel->getById($_SESSION['user_id']);
-      
-      // Afficher la vue
-      require_once BASE_PATH . '/views/users/profile.php';
+  public function show($id)
+  {
+      // Check if the user is logged in
+      if (!isset($_SESSION['user_id'])) {
+          header('Location: /login');
+          exit;
+      }
+
+      // Fetch the user data by ID
+      $user = User::getById($id);
+      // Check if the user exists
+      if (!$user) {
+          flash("error","Utilisateur non trouvé.");
+      }
+      // Pass user data to the view
+      $this->view('users/show', ['user' => $user],'admin');
   }
   
   /**
    * Mettre à jour le profil de l'utilisateur connecté
    */
-  public function updateProfile() {
+  public function profile() 
+  {
+    $this->checkAuth();
+    $user = User::getById(Auth::Id());
+    return $this->view('users/profile',['user' => $user],'admin');
+  }
+
+  public function updateProfile()
+   {
       // Vérifier si l'utilisateur est connecté
-      $this->authController->checkLogin();
-      
+      $this->checkAuth();
       if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      
           // Récupérer les données du formulaire
           $userData = [
               'nom' => $_POST['nom'] ?? '',
@@ -239,23 +241,25 @@ class UserController extends Controller{
           // Ajouter le mot de passe seulement s'il est fourni
           if (!empty($_POST['password'])) {
               $userData['password'] = $_POST['password'];
+              if($userData['password'] != $_POST['confirm_password']) {
+                $error[] = "Les mots de passe ne correspondent pas";
+              }
           }
           
           // Valider les données
-          $errors = $this->validateUserData($userData, $_SESSION['user_id']);
-          
+          $errors = $this->validateUserData($userData, Auth::Id(),'self-update');
           if (empty($errors)) {
               // Mettre à jour l'utilisateur
-              $success = $this->userModel->update($_SESSION['user_id'], $userData);
-              
+              $user = User::getById(Auth::Id());
+              $userData['role'] = $user['role'];
+              $userData['statut'] = $user['statut'];
+              // dd($userData);
+              $success = User::update(Auth::Id(), $userData);
               if ($success) {
                   // Mettre à jour le nom dans la session
                   $_SESSION['user_name'] = $userData['nom'];
-                  
                   // Rediriger vers le profil avec un message de succès
-                  $_SESSION['success_message'] = "Votre profil a été mis à jour avec succès.";
-                  header('Location: ' . APP_URL . '/profile');
-                  exit;
+                  flash("success", "Votre profil a été mis à jour avec succès.");
               } else {
                   $error = "Une erreur s'est produite lors de la mise à jour de votre profil.";
               }
@@ -266,18 +270,21 @@ class UserController extends Controller{
           
           // En cas d'erreur, réafficher le formulaire avec les données
           $user = $userData;
-          require_once BASE_PATH . '/views/users/profile.php';
+          return $this->view('users/profile', [
+            'user' => $user,
+            'errors' => $errors
+        ],'admin');
+
       } else {
           // Rediriger vers le profil
-          header('Location: ' . APP_URL . '/profile');
-          exit;
+          return $this->redirect('/users/profile');
       }
   }
   
   /**
    * Valider les données d'un utilisateur
    */
-  private function validateUserData($data, $userId = null) {
+  private function validateUserData($data, $userId = null,$type = null) {
       $errors = [];
       
       // Vérifier que les champs obligatoires sont remplis
@@ -306,9 +313,12 @@ class UserController extends Controller{
       
       // Vérifier que le type d'utilisateur est valide
       $validTypes = ['admin', 'magasinier', 'secretaire'];
-      if (empty($data['role']) || !in_array($data['role'], $validTypes)) {
+      if(in_array($type, ['update','create'])) {
+        if (empty($data['role']) || !in_array($data['role'], $validTypes)) {
           $errors[] = "Le type d'utilisateur n'est pas valide.";
+        }
       }
+     
       
       // Vérifier que le nom d'utilisateur est unique
       if (User::usernameExists($data['username'], $userId)) {

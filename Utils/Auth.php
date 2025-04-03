@@ -53,7 +53,7 @@ use App\Utils\Database;
     /**
      * Obtenir l'ID de l'utilisateur connecté
      */
-    public function getUserId() {
+    public static function Id() {
         return $_SESSION['user_id'] ?? null;
     }
     
